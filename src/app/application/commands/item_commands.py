@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class CreateItemCommand:
+    """Command to create a new item."""
+
     name: str
     price: float
     description: str = ""
@@ -21,6 +23,8 @@ class CreateItemCommand:
 
 @dataclass(frozen=True)
 class UpdateItemCommand:
+    """Command to update an existing item (all fields optional)."""
+
     item_id: uuid.UUID
     name: str | None = None
     price: float | None = None
@@ -30,5 +34,7 @@ class UpdateItemCommand:
 
 @dataclass(frozen=True)
 class DeleteItemCommand:
+    """Command to delete an item by ID."""
+
     item_id: uuid.UUID
     command_id: uuid.UUID = field(default_factory=uuid.uuid4)

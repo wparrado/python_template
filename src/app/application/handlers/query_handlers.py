@@ -18,10 +18,13 @@ from app.domain.ports.outbound.item_repository import IItemRepository
 
 
 class GetItemHandler:
+    """Handles GetItemQuery — fetches a single item by ID."""
+
     def __init__(self, repository: IItemRepository) -> None:
         self._repository = repository
 
     async def handle(self, query: GetItemQuery) -> Result[ItemOutputDTO, DomainError]:
+        """Execute the query and return the item or a NotFoundError."""
         item = await self._repository.find_by_id(query.item_id)
         if item is None:
             return Failure(ItemNotFoundError(str(query.item_id)))
@@ -29,9 +32,12 @@ class GetItemHandler:
 
 
 class ListItemsHandler:
+    """Handles ListItemsQuery — returns all items."""
+
     def __init__(self, repository: IItemRepository) -> None:
         self._repository = repository
 
-    async def handle(self, query: ListItemsQuery) -> Result[list[ItemOutputDTO], DomainError]:
+    async def handle(self, _query: ListItemsQuery) -> Result[list[ItemOutputDTO], DomainError]:
+        """Execute the query and return all items."""
         items = await self._repository.find_all()
         return Success(ItemMapper.to_output_dto_list(items))

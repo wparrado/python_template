@@ -18,19 +18,15 @@ class IItemRepository(ABC):
     @abstractmethod
     async def save(self, item: Item) -> None:
         """Persist a new or updated item."""
-        ...
 
     @abstractmethod
     async def find_by_id(self, item_id: uuid.UUID) -> Item | None:
         """Return the item with the given id, or None if not found."""
-        ...
 
     @abstractmethod
     async def find_all(self) -> list[Item]:
         """Return all items."""
-        ...
 
     @abstractmethod
     async def delete(self, item_id: uuid.UUID) -> None:
         """Delete the item with the given id (no-op if not found)."""
-        ...

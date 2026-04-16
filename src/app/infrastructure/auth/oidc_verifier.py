@@ -41,6 +41,11 @@ class OidcVerifier:
         self._jwks: dict[str, object] | None = None
         self._jwt = JsonWebToken(settings.oidc_algorithms)
 
+    @property
+    def oidc_issuer(self) -> str:
+        """Return the configured OIDC issuer URL."""
+        return self._settings.oidc_issuer
+
     async def initialize(self) -> None:
         """Fetch JWKS from the discovery endpoint and cache them."""
         if not self._settings.oidc_issuer:
@@ -88,7 +93,7 @@ def make_current_user_dependency(verifier: OidcVerifier) -> Callable[..., Corout
         credentials: HTTPAuthorizationCredentials | None = None,
     ) -> CurrentUser:
         if credentials is None:
-            if not verifier._settings.oidc_issuer:
+            if not verifier.oidc_issuer:
                 return CurrentUser(sub="anonymous")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

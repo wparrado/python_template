@@ -35,18 +35,21 @@ class Container:
     # ------------------------------------------------------------------
 
     def create_item_handler(self) -> CreateItemHandler:
+        """Return a CreateItemHandler wired to the configured adapters."""
         return CreateItemHandler(
             repository=self._item_repository,
             publisher=self._event_publisher,
         )
 
     def update_item_handler(self) -> UpdateItemHandler:
+        """Return an UpdateItemHandler wired to the configured adapters."""
         return UpdateItemHandler(
             repository=self._item_repository,
             publisher=self._event_publisher,
         )
 
     def delete_item_handler(self) -> DeleteItemHandler:
+        """Return a DeleteItemHandler wired to the configured adapters."""
         return DeleteItemHandler(
             repository=self._item_repository,
             publisher=self._event_publisher,
@@ -57,7 +60,9 @@ class Container:
     # ------------------------------------------------------------------
 
     def get_item_handler(self) -> GetItemHandler:
+        """Return a GetItemHandler wired to the configured adapters."""
         return GetItemHandler(repository=self._item_repository)
 
     def list_items_handler(self) -> ListItemsHandler:
+        """Return a ListItemsHandler wired to the configured adapters."""
         return ListItemsHandler(repository=self._item_repository)

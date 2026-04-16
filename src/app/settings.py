@@ -1,10 +1,14 @@
 """Application settings driven entirely by environment variables."""
 
+from functools import lru_cache
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Pydantic settings model — all values are read from environment variables or .env."""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -31,12 +35,7 @@ class Settings(BaseSettings):
     otel_enabled: bool = Field(default=False, description="Enable OpenTelemetry instrumentation")
 
 
-_settings: Settings | None = None
-
-
+@lru_cache(maxsize=1)
 def get_settings() -> Settings:
     """Return cached Settings singleton."""
-    global _settings
-    if _settings is None:
-        _settings = Settings()
-    return _settings
+    return Settings()

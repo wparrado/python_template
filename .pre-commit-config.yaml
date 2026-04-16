@@ -9,55 +9,43 @@ repos:
 
   - repo: local
     hooks:
-      - id: ruff-format
-        name: ruff format
-        language: system
-        entry: uv run ruff format --check src/ tests/
-        types: [python]
-        stages: [commit, push]
-        pass_filenames: false
-
-      - id: ruff-lint
-        name: ruff lint
-        language: system
-        entry: uv run ruff check src/ tests/
-        types: [python]
-        stages: [commit, push]
-        pass_filenames: false
-
-      - id: mypy
-        name: mypy type check
-        language: system
-        entry: bash -c 'MYPYPATH=src uv run mypy --explicit-package-bases $(find src/app -name "*.py" | tr "\n" " ")'
-        types: [python]
-        stages: [commit, push]
-        pass_filenames: false
-
-      - id: pylint
-        name: pylint
-        language: system
-        entry: uv run pylint src/app
-        types: [python]
-        stages: [commit, push]
-        pass_filenames: false
-
+      # ----------------------------------------------------------------
+      # pre-commit: architectural enforcement only
+      # ----------------------------------------------------------------
       - id: tach-check
-        name: tach module boundaries (dtach)
+        name: tach — module boundary enforcement
         language: system
         entry: uv run tach check
-        stages: [commit, push]
+        stages: [pre-commit]
         pass_filenames: false
 
       - id: import-linter
-        name: import-linter contracts
+        name: import-linter — layered dependency contracts
         language: system
         entry: uv run lint-imports
-        stages: [commit, push]
+        stages: [pre-commit]
         pass_filenames: false
 
       - id: architecture-tests
-        name: architectural tests (pytest-archon)
+        name: pytest-archon — architectural rule tests
         language: system
         entry: uv run pytest tests/architecture/ -x -q
-        stages: [commit, push]
+        stages: [pre-commit]
+        pass_filenames: false
+
+      # ----------------------------------------------------------------
+      # pre-push: quality gate (pylint 10/10 + mypy 0 errors)
+      # ----------------------------------------------------------------
+      - id: mypy
+        name: mypy — strict type checking
+        language: system
+        entry: bash -c 'MYPYPATH=src uv run mypy --explicit-package-bases $(find src/app -name "*.py" | tr "\n" " ")'
+        stages: [pre-push]
+        pass_filenames: false
+
+      - id: pylint
+        name: pylint — code quality (must score 10/10)
+        language: system
+        entry: bash -c 'PYTHONPATH=src uv run pylint src/app --fail-under=10'
+        stages: [pre-push]
         pass_filenames: false

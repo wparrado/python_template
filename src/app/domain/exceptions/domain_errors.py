@@ -25,6 +25,8 @@ class NotFoundError(DomainError):
 
 
 class ItemNotFoundError(NotFoundError):
+    """Raised when a specific item cannot be found by ID."""
+
     def __init__(self, item_id: str) -> None:
         super().__init__(f"Item '{item_id}' not found")
         self.item_id = item_id

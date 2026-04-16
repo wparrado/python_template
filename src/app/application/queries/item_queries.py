@@ -12,10 +12,14 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class GetItemQuery:
+    """Query to retrieve a single item by its ID."""
+
     item_id: uuid.UUID
     query_id: uuid.UUID = field(default_factory=uuid.uuid4)
 
 
 @dataclass(frozen=True)
 class ListItemsQuery:
+    """Query to retrieve all items."""
+
     query_id: uuid.UUID = field(default_factory=uuid.uuid4)

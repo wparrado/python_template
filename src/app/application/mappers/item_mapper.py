@@ -14,6 +14,7 @@ class ItemMapper:
 
     @staticmethod
     def to_output_dto(item: Item) -> ItemOutputDTO:
+        """Convert an Item aggregate to an ItemOutputDTO."""
         return ItemOutputDTO(
             id=item.id,
             name=item.name,
@@ -25,4 +26,5 @@ class ItemMapper:
 
     @staticmethod
     def to_output_dto_list(items: list[Item]) -> list[ItemOutputDTO]:
+        """Convert a list of Item aggregates to a list of ItemOutputDTOs."""
         return [ItemMapper.to_output_dto(item) for item in items]

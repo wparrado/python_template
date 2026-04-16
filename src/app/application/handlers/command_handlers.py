@@ -27,11 +27,14 @@ from app.domain.ports.outbound.item_repository import IItemRepository
 
 
 class CreateItemHandler:
+    """Handles CreateItemCommand — creates and persists a new Item."""
+
     def __init__(self, repository: IItemRepository, publisher: IDomainEventPublisher) -> None:
         self._repository = repository
         self._publisher = publisher
 
     async def handle(self, command: CreateItemCommand) -> Result[ItemOutputDTO, DomainError]:
+        """Execute the command and return the created item DTO or a DomainError."""
         try:
             item = Item.create(
                 name=command.name,
@@ -46,11 +49,14 @@ class CreateItemHandler:
 
 
 class UpdateItemHandler:
+    """Handles UpdateItemCommand — updates fields on an existing Item."""
+
     def __init__(self, repository: IItemRepository, publisher: IDomainEventPublisher) -> None:
         self._repository = repository
         self._publisher = publisher
 
     async def handle(self, command: UpdateItemCommand) -> Result[ItemOutputDTO, DomainError]:
+        """Execute the command and return the updated item DTO or a DomainError."""
         try:
             item = await self._repository.find_by_id(command.item_id)
             if item is None:
@@ -64,11 +70,14 @@ class UpdateItemHandler:
 
 
 class DeleteItemHandler:
+    """Handles DeleteItemCommand — removes an Item by ID."""
+
     def __init__(self, repository: IItemRepository, publisher: IDomainEventPublisher) -> None:
         self._repository = repository
         self._publisher = publisher
 
     async def handle(self, command: DeleteItemCommand) -> Result[None, DomainError]:
+        """Execute the command and return Success(None) or a DomainError."""
         try:
             item = await self._repository.find_by_id(command.item_id)
             if item is None:

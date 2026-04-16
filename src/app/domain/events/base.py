@@ -22,4 +22,5 @@ class DomainEvent:
 
     @property
     def event_type(self) -> str:
+        """Return the class name as the event type identifier."""
         return self.__class__.__name__

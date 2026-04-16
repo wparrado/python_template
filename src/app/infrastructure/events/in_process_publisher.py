@@ -7,13 +7,10 @@ In production, replace with an async message broker adapter
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Awaitable, Callable
 
 from app.domain.events.base import DomainEvent
 from app.domain.ports.outbound.event_publisher import IDomainEventPublisher
-
-logger = logging.getLogger(__name__)
 
 EventHandler = Callable[[DomainEvent], Awaitable[None]]
 
@@ -29,9 +26,7 @@ class InProcessEventPublisher(IDomainEventPublisher):
         self._handlers.setdefault(event_type, []).append(handler)
 
     async def publish(self, event: DomainEvent) -> None:
+        """Dispatch the event to all registered handlers for its type."""
         handlers = self._handlers.get(type(event), [])
         for handler in handlers:
-            try:
-                await handler(event)
-            except Exception:
-                logger.exception("Event handler failed for %s", event.event_type)
+            await handler(event)

@@ -86,6 +86,7 @@ class Item(AggregateRoot):
         )
 
     def mark_deleted(self) -> None:
+        """Mark this item as deleted and emit an ItemDeleted event."""
         self._record_event(ItemDeleted(aggregate_id=self.id, item_id=self.id))
 
     # ------------------------------------------------------------------
