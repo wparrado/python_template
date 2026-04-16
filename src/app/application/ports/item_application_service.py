@@ -12,9 +12,14 @@ what it *offers* (inbound ports / use-case API).
 from __future__ import annotations
 
 import uuid
+from decimal import Decimal
 from typing import Protocol
 
 from app.application.dtos.item_dtos import ItemOutputDTO
+
+__all__ = ["IItemApplicationService"]
+
+_DEFAULT_LIMIT = 50
 
 
 class IItemApplicationService(Protocol):
@@ -26,23 +31,23 @@ class IItemApplicationService(Protocol):
     handle them without importing from the domain directly.
     """
 
-    async def create_item(self, name: str, price: float, description: str) -> ItemOutputDTO:
+    async def create_item(self, name: str, price: Decimal, description: str) -> ItemOutputDTO:
         """Create a new item and return its DTO."""
 
     async def get_item(self, item_id: uuid.UUID) -> ItemOutputDTO:
         """Return the DTO for an existing item.  Raises ItemNotFoundError if absent."""
 
-    async def list_items(self) -> list[ItemOutputDTO]:
-        """Return DTOs for all items."""
+    async def list_items(self, limit: int = _DEFAULT_LIMIT, offset: int = 0) -> list[ItemOutputDTO]:
+        """Return paginated DTOs.  limit caps the result size; offset skips leading items."""
 
     async def update_item(
         self,
         item_id: uuid.UUID,
         name: str | None,
-        price: float | None,
+        price: Decimal | None,
         description: str | None,
     ) -> ItemOutputDTO:
         """Update item fields and return the updated DTO.  Raises ItemNotFoundError if absent."""
 
     async def delete_item(self, item_id: uuid.UUID) -> None:
-        """Delete an item.  Raises ItemNotFoundError if absent."""
+        """Delete an item.  Idempotent: succeeds silently if the item does not exist."""

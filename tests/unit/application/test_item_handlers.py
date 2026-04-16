@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import uuid
+from decimal import Decimal
+
 import pytest
 
 from app.application.commands.item_commands import CreateItemCommand, DeleteItemCommand
@@ -30,7 +33,7 @@ async def test_create_item_returns_success(
     publisher: InProcessEventPublisher,
 ) -> None:
     handler = CreateItemHandler(repository=repository, publisher=publisher)
-    result = await handler.handle(CreateItemCommand(name="Widget", price=9.99))
+    result = await handler.handle(CreateItemCommand(name="Widget", price=Decimal("9.99")))
     assert isinstance(result, Success)
     assert result.value.name == "Widget"
 
@@ -41,14 +44,12 @@ async def test_create_item_invalid_returns_failure(
     publisher: InProcessEventPublisher,
 ) -> None:
     handler = CreateItemHandler(repository=repository, publisher=publisher)
-    result = await handler.handle(CreateItemCommand(name="", price=9.99))
+    result = await handler.handle(CreateItemCommand(name="", price=Decimal("9.99")))
     assert isinstance(result, Failure)
 
 
 @pytest.mark.asyncio
 async def test_get_item_not_found_returns_failure(repository: InMemoryItemRepository) -> None:
-    import uuid
-
     handler = GetItemHandler(repository=repository)
     result = await handler.handle(GetItemQuery(item_id=uuid.uuid4()))
     assert isinstance(result, Failure)
@@ -61,8 +62,8 @@ async def test_list_items_returns_all(
     publisher: InProcessEventPublisher,
 ) -> None:
     create_handler = CreateItemHandler(repository=repository, publisher=publisher)
-    await create_handler.handle(CreateItemCommand(name="A", price=1.0))
-    await create_handler.handle(CreateItemCommand(name="B", price=2.0))
+    await create_handler.handle(CreateItemCommand(name="A", price=Decimal("1.00")))
+    await create_handler.handle(CreateItemCommand(name="B", price=Decimal("2.00")))
 
     list_handler = ListItemsHandler(repository=repository)
     result = await list_handler.handle(ListItemsQuery())
@@ -71,13 +72,25 @@ async def test_list_items_returns_all(
 
 
 @pytest.mark.asyncio
-async def test_delete_nonexistent_returns_failure(
+async def test_list_items_pagination(
     repository: InMemoryItemRepository,
     publisher: InProcessEventPublisher,
 ) -> None:
-    import uuid
+    create_handler = CreateItemHandler(repository=repository, publisher=publisher)
+    for i in range(5):
+        await create_handler.handle(CreateItemCommand(name=f"Item {i}", price=Decimal("1.00")))
 
+    list_handler = ListItemsHandler(repository=repository)
+    result = await list_handler.handle(ListItemsQuery(limit=2, offset=1))
+    assert isinstance(result, Success)
+    assert len(result.value) == 2
+
+
+@pytest.mark.asyncio
+async def test_delete_nonexistent_is_idempotent(
+    repository: InMemoryItemRepository,
+    publisher: InProcessEventPublisher,
+) -> None:
     handler = DeleteItemHandler(repository=repository, publisher=publisher)
     result = await handler.handle(DeleteItemCommand(item_id=uuid.uuid4()))
-    assert isinstance(result, Failure)
-    assert isinstance(result.error, ItemNotFoundError)
+    assert isinstance(result, Success)

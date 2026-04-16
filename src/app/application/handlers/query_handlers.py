@@ -32,12 +32,12 @@ class GetItemHandler:
 
 
 class ListItemsHandler:
-    """Handles ListItemsQuery — returns all items."""
+    """Handles ListItemsQuery — returns a paginated list of items."""
 
     def __init__(self, repository: IItemRepository) -> None:
         self._repository = repository
 
-    async def handle(self, _query: ListItemsQuery) -> Result[list[ItemOutputDTO], DomainError]:
-        """Execute the query and return all items."""
-        items = await self._repository.find_all()
+    async def handle(self, query: ListItemsQuery) -> Result[list[ItemOutputDTO], DomainError]:
+        """Execute the query and return paginated items."""
+        items = await self._repository.find_all(limit=query.limit, offset=query.offset)
         return Success(ItemMapper.to_output_dto_list(items))

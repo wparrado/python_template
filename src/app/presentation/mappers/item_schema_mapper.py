@@ -1,42 +1,31 @@
 """Schema <-> DTO mapper for the presentation layer.
 
 Keeps presentation schemas decoupled from application DTOs.
+The Decimal-to-float conversion for responses happens here —
+at the presentation boundary — intentionally.
 """
 
 from __future__ import annotations
 
-from app.application.dtos.item_dtos import ItemInputDTO, ItemOutputDTO, ItemUpdateDTO
-from app.presentation.api.v1.schemas.item_schemas import CreateItemRequest, ItemResponse, UpdateItemRequest
+from app.application.dtos.item_dtos import ItemOutputDTO
+from app.presentation.api.v1.schemas.item_schemas import ItemResponse
 
 
 class ItemSchemaMapper:
     """Maps between presentation API schemas and application DTOs."""
 
     @staticmethod
-    def to_input_dto(request: CreateItemRequest) -> ItemInputDTO:
-        """Convert a create request schema to an application input DTO."""
-        return ItemInputDTO(
-            name=request.name,
-            price=request.price,
-            description=request.description,
-        )
-
-    @staticmethod
-    def to_update_dto(request: UpdateItemRequest) -> ItemUpdateDTO:
-        """Convert an update request schema to an application update DTO."""
-        return ItemUpdateDTO(
-            name=request.name,
-            price=request.price,
-            description=request.description,
-        )
-
-    @staticmethod
     def to_response(dto: ItemOutputDTO) -> ItemResponse:
-        """Convert an application output DTO to an API response schema."""
+        """Convert an application output DTO to an API response schema.
+
+        ``price`` is converted from ``Decimal`` to ``float`` at the HTTP
+        boundary.  Monetary precision is preserved inside the application;
+        JSON clients receive a standard float representation.
+        """
         return ItemResponse(
             id=dto.id,
             name=dto.name,
-            price=dto.price,
+            price=float(dto.price),
             description=dto.description,
             created_at=dto.created_at,
             updated_at=dto.updated_at,

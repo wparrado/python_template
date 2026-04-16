@@ -8,7 +8,8 @@ No external dependencies.
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from decimal import Decimal
 
 from app.domain.exceptions.domain_errors import ValidationError
 from app.domain.model.aggregate import AggregateRoot
@@ -24,7 +25,7 @@ class Item(AggregateRoot):
     """
 
     name: str = ""
-    price: float = 0.0
+    price: Decimal = field(default_factory=lambda: Decimal("0"))
     description: str = ""
 
     # ------------------------------------------------------------------
@@ -35,7 +36,7 @@ class Item(AggregateRoot):
     def create(
         cls,
         name: str,
-        price: float,
+        price: Decimal,
         description: str = "",
         item_id: uuid.UUID | None = None,
     ) -> Item:
@@ -64,7 +65,7 @@ class Item(AggregateRoot):
     def update(
         self,
         name: str | None = None,
-        price: float | None = None,
+        price: Decimal | None = None,
         description: str | None = None,
     ) -> None:
         """Update item fields, enforcing invariants."""
@@ -87,6 +88,7 @@ class Item(AggregateRoot):
 
     def mark_deleted(self) -> None:
         """Mark this item as deleted and emit an ItemDeleted event."""
+        self.is_deleted = True
         self._record_event(ItemDeleted(aggregate_id=self.id, item_id=self.id))
 
     # ------------------------------------------------------------------
@@ -96,5 +98,5 @@ class Item(AggregateRoot):
     def _validate(self) -> None:
         if not self.name or not self.name.strip():
             raise ValidationError("Item name must not be empty")
-        if self.price < 0:
+        if self.price < Decimal("0"):
             raise ValidationError("Item price must be non-negative")

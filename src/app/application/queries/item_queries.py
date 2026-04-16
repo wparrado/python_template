@@ -9,6 +9,8 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 
+_DEFAULT_LIMIT = 50
+
 
 @dataclass(frozen=True)
 class GetItemQuery:
@@ -20,6 +22,8 @@ class GetItemQuery:
 
 @dataclass(frozen=True)
 class ListItemsQuery:
-    """Query to retrieve all items."""
+    """Query to retrieve a paginated list of items."""
 
+    limit: int = _DEFAULT_LIMIT
+    offset: int = 0
     query_id: uuid.UUID = field(default_factory=uuid.uuid4)

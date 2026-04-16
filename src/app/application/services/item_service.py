@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
+from decimal import Decimal
 
 from app.application.commands.item_commands import (
     CreateItemCommand,
@@ -30,6 +31,8 @@ from app.application.handlers.command_handlers import (
 from app.application.handlers.query_handlers import GetItemHandler, ListItemsHandler
 from app.application.queries.item_queries import GetItemQuery, ListItemsQuery
 from app.application.result import Failure
+
+_DEFAULT_LIMIT = 50
 
 
 @dataclass
@@ -56,7 +59,7 @@ class ItemApplicationService:
         """Wire the service with its grouped command and query handlers."""
         self._handlers = handlers
 
-    async def create_item(self, name: str, price: float, description: str) -> ItemOutputDTO:
+    async def create_item(self, name: str, price: Decimal, description: str) -> ItemOutputDTO:
         """Create a new item and return its DTO."""
         result = await self._handlers.create.handle(
             CreateItemCommand(name=name, price=price, description=description)
@@ -72,9 +75,9 @@ class ItemApplicationService:
             raise result.error
         return result.value
 
-    async def list_items(self) -> list[ItemOutputDTO]:
-        """Return DTOs for all items."""
-        result = await self._handlers.list_all.handle(ListItemsQuery())
+    async def list_items(self, limit: int = _DEFAULT_LIMIT, offset: int = 0) -> list[ItemOutputDTO]:
+        """Return paginated DTOs for items."""
+        result = await self._handlers.list_all.handle(ListItemsQuery(limit=limit, offset=offset))
         if isinstance(result, Failure):
             raise result.error
         return result.value
@@ -83,7 +86,7 @@ class ItemApplicationService:
         self,
         item_id: uuid.UUID,
         name: str | None,
-        price: float | None,
+        price: Decimal | None,
         description: str | None,
     ) -> ItemOutputDTO:
         """Update item fields and return the updated DTO.  Raises ItemNotFoundError if absent."""
@@ -95,7 +98,7 @@ class ItemApplicationService:
         return result.value
 
     async def delete_item(self, item_id: uuid.UUID) -> None:
-        """Delete an item.  Raises ItemNotFoundError if absent."""
+        """Delete an item.  Idempotent: succeeds silently if the item does not exist."""
         result = await self._handlers.delete.handle(DeleteItemCommand(item_id=item_id))
         if isinstance(result, Failure):
             raise result.error

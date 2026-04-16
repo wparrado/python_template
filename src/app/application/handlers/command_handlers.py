@@ -77,11 +77,15 @@ class DeleteItemHandler:
         self._publisher = publisher
 
     async def handle(self, command: DeleteItemCommand) -> Result[None, DomainError]:
-        """Execute the command and return Success(None) or a DomainError."""
+        """Execute the command and return Success(None).
+
+        Idempotent: if the item does not exist the operation succeeds silently,
+        consistent with HTTP DELETE semantics (a second call yields the same state).
+        """
         try:
             item = await self._repository.find_by_id(command.item_id)
             if item is None:
-                return Failure(ItemNotFoundError(str(command.item_id)))
+                return Success(None)
             item.mark_deleted()
             await self._repository.delete(command.item_id)
             await self._publisher.publish_all(item.collect_events())

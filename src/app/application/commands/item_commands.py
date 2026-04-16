@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 
 @dataclass(frozen=True)
@@ -16,7 +17,7 @@ class CreateItemCommand:
     """Command to create a new item."""
 
     name: str
-    price: float
+    price: Decimal
     description: str = ""
     command_id: uuid.UUID = field(default_factory=uuid.uuid4)
 
@@ -27,7 +28,7 @@ class UpdateItemCommand:
 
     item_id: uuid.UUID
     name: str | None = None
-    price: float | None = None
+    price: Decimal | None = None
     description: str | None = None
     command_id: uuid.UUID = field(default_factory=uuid.uuid4)
 

@@ -19,7 +19,7 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 
 from app.application.ports.item_application_service import IItemApplicationService
 from app.presentation.app_state import get_app_state
@@ -31,6 +31,9 @@ from app.presentation.api.v1.schemas.item_schemas import (
 from app.presentation.mappers.item_schema_mapper import ItemSchemaMapper
 
 router = APIRouter(prefix="/items", tags=["items"])
+
+_MAX_PAGE_SIZE = 1000
+_DEFAULT_PAGE_SIZE = 50
 
 
 def _get_item_service(request: Request) -> IItemApplicationService:
@@ -50,9 +53,11 @@ async def create_item(
 @router.get("", response_model=list[ItemResponse])
 async def list_items(
     service: Annotated[IItemApplicationService, Depends(_get_item_service)],
+    limit: int = Query(default=_DEFAULT_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE, description="Max items to return"),
+    offset: int = Query(default=0, ge=0, description="Number of items to skip"),
 ) -> list[ItemResponse]:
-    """List all items."""
-    dtos = await service.list_items()
+    """List items with optional pagination."""
+    dtos = await service.list_items(limit=limit, offset=offset)
     return ItemSchemaMapper.to_response_list(dtos)
 
 
@@ -87,5 +92,5 @@ async def delete_item(
     item_id: uuid.UUID,
     service: Annotated[IItemApplicationService, Depends(_get_item_service)],
 ) -> None:
-    """Delete an item by ID."""
+    """Delete an item by ID.  Idempotent: returns 204 even if the item does not exist."""
     await service.delete_item(item_id)

@@ -67,9 +67,17 @@ def test_list_items_empty_returns_200(client: TestClient) -> None:
     assert response.json() == []
 
 
+def test_list_items_pagination(client: TestClient) -> None:
+    for i in range(5):
+        client.post("/api/v1/items", json={"name": f"Item {i}", "price": "1.00"})
+    response = client.get("/api/v1/items?limit=2&offset=1")
+    assert response.status_code == 200
+    assert len(response.json()) == 2
+
+
 def test_list_items_returns_created_items(client: TestClient) -> None:
-    client.post("/api/v1/items", json={"name": "A", "price": 1.0})
-    client.post("/api/v1/items", json={"name": "B", "price": 2.0})
+    client.post("/api/v1/items", json={"name": "A", "price": "1.00"})
+    client.post("/api/v1/items", json={"name": "B", "price": "2.00"})
     response = client.get("/api/v1/items")
     assert response.status_code == 200
     assert len(response.json()) == 2
@@ -132,9 +140,10 @@ def test_delete_item_then_get_returns_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
-def test_delete_item_not_found_returns_404(client: TestClient) -> None:
+def test_delete_item_not_found_returns_204(client: TestClient) -> None:
+    """DELETE is idempotent — absent item returns 204, not 404."""
     response = client.delete("/api/v1/items/00000000-0000-0000-0000-000000000000")
-    assert response.status_code == 404
+    assert response.status_code == 204
 
 
 # ---------------------------------------------------------------------------
