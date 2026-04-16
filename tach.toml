@@ -19,5 +19,4 @@ depends_on = [
 path = "app.presentation"
 depends_on = [
     { path = "app.application" },
-    { path = "app.infrastructure" },
 ]

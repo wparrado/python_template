@@ -21,11 +21,10 @@ forbidden_modules =
     app.infrastructure
     app.presentation
 
-[importlinter:contract:layered-architecture]
-name = Layers follow hexagonal dependency order
-type = layers
-layers =
+[importlinter:contract:presentation-independence]
+name = Presentation does not depend on infrastructure
+type = forbidden
+source_modules =
     app.presentation
+forbidden_modules =
     app.infrastructure
-    app.application
-    app.domain

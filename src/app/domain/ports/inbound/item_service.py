@@ -1,38 +1,11 @@
-"""Inbound port: IItemApplicationService.
+"""Inbound ports — not defined in the domain layer.
 
-Primary (driving) port — defines the contract that the presentation
-layer uses to call item-related use cases.
-The application layer implements this via command/query handlers.
+Primary ports (driving ports) define the API that the presentation layer
+calls into the application.  They belong in the **application** layer,
+not the domain layer, which only defines what it *needs* from the outside
+(outbound / driven ports such as IItemRepository).
+
+The canonical inbound port for items lives at:
+
+    app.application.ports.item_application_service.IItemApplicationService
 """
-
-from __future__ import annotations
-
-import uuid
-from typing import Protocol
-
-from app.domain.model.example.item import Item
-
-
-class IItemApplicationService(Protocol):
-    """Primary (driving) port for item operations."""
-
-    async def create_item(self, name: str, price: float, description: str) -> Item:
-        """Create a new item and return the resulting aggregate."""
-
-    async def get_item(self, item_id: uuid.UUID) -> Item:
-        """Return the item with the given ID."""
-
-    async def list_items(self) -> list[Item]:
-        """Return all items."""
-
-    async def update_item(
-        self,
-        item_id: uuid.UUID,
-        name: str | None,
-        price: float | None,
-        description: str | None,
-    ) -> Item:
-        """Update item fields and return the updated aggregate."""
-
-    async def delete_item(self, item_id: uuid.UUID) -> None:
-        """Delete the item with the given ID."""

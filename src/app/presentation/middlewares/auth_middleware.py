@@ -15,7 +15,7 @@ from typing import Annotated, Any
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.infrastructure.auth.models import CurrentUser
+from app.application.dtos.auth_dtos import CurrentUser
 
 _bearer = HTTPBearer(auto_error=False)
 

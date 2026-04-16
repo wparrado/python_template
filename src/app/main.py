@@ -21,6 +21,7 @@ from app.infrastructure.observability.logging import configure_logging
 from app.infrastructure.observability.metrics import configure_metrics
 from app.infrastructure.observability.tracing import configure_tracing
 from app.presentation.api.v1.routers import health, items
+from app.presentation.app_state import AppState
 from app.presentation.error_handlers import register_error_handlers
 from app.presentation.middlewares.correlation_id import CorrelationIdMiddleware
 from app.presentation.middlewares.telemetry_middleware import TelemetryMiddleware
@@ -31,6 +32,7 @@ from app.settings import Settings, get_settings
 async def lifespan(fastapi_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: startup and shutdown."""
     settings: Settings = fastapi_app.state.settings
+    oidc_verifier: OidcVerifier = fastapi_app.state.oidc_verifier
 
     # Observability
     configure_logging(settings)
@@ -38,8 +40,7 @@ async def lifespan(fastapi_app: FastAPI) -> AsyncGenerator[None, None]:
     configure_metrics(settings)
 
     # Auth
-    verifier: OidcVerifier = fastapi_app.state.oidc_verifier
-    await verifier.initialize()
+    await oidc_verifier.initialize()
 
     yield
 
@@ -58,10 +59,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
 
-    # State
+    container = Container(settings)
+    oidc_verifier = OidcVerifier(settings)
+
+    # Single typed state object for presentation layer (application deps only)
+    fastapi_app.state.app_state = AppState(
+        item_service=container.item_application_service(),
+    )
+    # Infrastructure/settings stored separately for lifespan use
     fastapi_app.state.settings = settings
-    fastapi_app.state.container = Container(settings)
-    fastapi_app.state.oidc_verifier = OidcVerifier(settings)
+    fastapi_app.state.oidc_verifier = oidc_verifier
 
     # Middlewares (order matters: outermost first)
     fastapi_app.add_middleware(TelemetryMiddleware)

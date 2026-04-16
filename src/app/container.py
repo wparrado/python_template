@@ -12,6 +12,7 @@ from app.application.handlers.command_handlers import (
     UpdateItemHandler,
 )
 from app.application.handlers.query_handlers import GetItemHandler, ListItemsHandler
+from app.application.services.item_service import ItemApplicationService, ItemHandlers
 from app.infrastructure.events.in_process_publisher import InProcessEventPublisher
 from app.infrastructure.persistence.in_memory.item_repository import InMemoryItemRepository
 from app.settings import Settings
@@ -20,35 +21,54 @@ from app.settings import Settings
 class Container:
     """Simple manual DI container.
 
-    For a larger application, replace with dependency-injector's
-    DeclarativeContainer for auto-wiring, scoping, and overrides.
+    Wires infrastructure adapters to domain ports and application services.
+    To swap an adapter (e.g., replace InMemory with SQLAlchemy), create a
+    new class that implements the relevant port and update the binding here
+    — domain and application code remain untouched.
     """
 
     def __init__(self, settings: Settings) -> None:
+        """Initialise the container and build all singleton adapters."""
         self._settings = settings
-        # Infrastructure adapters (singletons)
+        # Infrastructure adapters — one instance shared across all handlers
         self._item_repository = InMemoryItemRepository()
         self._event_publisher = InProcessEventPublisher()
 
     # ------------------------------------------------------------------
-    # Command handlers
+    # Application service (primary port implementation)
     # ------------------------------------------------------------------
 
-    def create_item_handler(self) -> CreateItemHandler:
+    def item_application_service(self) -> ItemApplicationService:
+        """Return an ItemApplicationService wired to all required handlers."""
+        return ItemApplicationService(
+            handlers=ItemHandlers(
+                create=self._create_item_handler(),
+                update=self._update_item_handler(),
+                delete=self._delete_item_handler(),
+                get=self._get_item_handler(),
+                list_all=self._list_items_handler(),
+            )
+        )
+
+    # ------------------------------------------------------------------
+    # Command handlers (private — consumed by the service above)
+    # ------------------------------------------------------------------
+
+    def _create_item_handler(self) -> CreateItemHandler:
         """Return a CreateItemHandler wired to the configured adapters."""
         return CreateItemHandler(
             repository=self._item_repository,
             publisher=self._event_publisher,
         )
 
-    def update_item_handler(self) -> UpdateItemHandler:
+    def _update_item_handler(self) -> UpdateItemHandler:
         """Return an UpdateItemHandler wired to the configured adapters."""
         return UpdateItemHandler(
             repository=self._item_repository,
             publisher=self._event_publisher,
         )
 
-    def delete_item_handler(self) -> DeleteItemHandler:
+    def _delete_item_handler(self) -> DeleteItemHandler:
         """Return a DeleteItemHandler wired to the configured adapters."""
         return DeleteItemHandler(
             repository=self._item_repository,
@@ -56,13 +76,13 @@ class Container:
         )
 
     # ------------------------------------------------------------------
-    # Query handlers
+    # Query handlers (private — consumed by the service above)
     # ------------------------------------------------------------------
 
-    def get_item_handler(self) -> GetItemHandler:
+    def _get_item_handler(self) -> GetItemHandler:
         """Return a GetItemHandler wired to the configured adapters."""
         return GetItemHandler(repository=self._item_repository)
 
-    def list_items_handler(self) -> ListItemsHandler:
+    def _list_items_handler(self) -> ListItemsHandler:
         """Return a ListItemsHandler wired to the configured adapters."""
         return ListItemsHandler(repository=self._item_repository)

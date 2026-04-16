@@ -1,18 +1,14 @@
-"""CurrentUser dataclass — lives in infrastructure, NOT in domain.
+"""CurrentUser — re-exported from the application layer for backwards compatibility.
 
-The domain has zero knowledge of authentication.
+Infrastructure code should import CurrentUser from:
+    app.application.dtos.auth_dtos
+
+This file is kept to avoid breaking any existing infrastructure code that
+imports from this location directly.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from app.application.dtos.auth_dtos import CurrentUser
 
-
-@dataclass(frozen=True)
-class CurrentUser:
-    """Authenticated user extracted from a validated OIDC JWT."""
-
-    sub: str
-    email: str = ""
-    roles: list[str] = field(default_factory=list)
-    raw_claims: dict[str, object] = field(default_factory=dict, repr=False)
+__all__ = ["CurrentUser"]
