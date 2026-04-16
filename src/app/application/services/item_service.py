@@ -22,14 +22,14 @@ from app.application.commands.item_commands import (
     DeleteItemCommand,
     UpdateItemCommand,
 )
-from app.application.dtos.item_dtos import ItemOutputDTO
+from app.application.dtos.item_dtos import ItemOutputDTO, ItemSearchParams
 from app.application.handlers.command_handlers import (
     CreateItemHandler,
     DeleteItemHandler,
     UpdateItemHandler,
 )
-from app.application.handlers.query_handlers import GetItemHandler, ListItemsHandler
-from app.application.queries.item_queries import GetItemQuery, ListItemsQuery
+from app.application.handlers.query_handlers import GetItemHandler, ListItemsHandler, SearchItemsHandler
+from app.application.queries.item_queries import GetItemQuery, ListItemsQuery, SearchItemsQuery
 from app.application.result import Failure
 
 _DEFAULT_LIMIT = 50
@@ -44,6 +44,7 @@ class ItemHandlers:
     delete: DeleteItemHandler
     get: GetItemHandler
     list_all: ListItemsHandler
+    search: SearchItemsHandler
 
 
 class ItemApplicationService:
@@ -102,3 +103,18 @@ class ItemApplicationService:
         result = await self._handlers.delete.handle(DeleteItemCommand(item_id=item_id))
         if isinstance(result, Failure):
             raise result.error
+
+    async def search_items(self, params: ItemSearchParams) -> list[ItemOutputDTO]:
+        """Search items using the filter and pagination settings in *params*."""
+        result = await self._handlers.search.handle(
+            SearchItemsQuery(
+                min_price=params.min_price,
+                max_price=params.max_price,
+                name_contains=params.name_contains,
+                limit=params.limit,
+                offset=params.offset,
+            )
+        )
+        if isinstance(result, Failure):
+            raise result.error
+        return result.value

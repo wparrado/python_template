@@ -15,7 +15,7 @@ import uuid
 from decimal import Decimal
 from typing import Protocol
 
-from app.application.dtos.item_dtos import ItemOutputDTO
+from app.application.dtos.item_dtos import ItemOutputDTO, ItemSearchParams
 
 __all__ = ["IItemApplicationService"]
 
@@ -51,3 +51,10 @@ class IItemApplicationService(Protocol):
 
     async def delete_item(self, item_id: uuid.UUID) -> None:
         """Delete an item.  Idempotent: succeeds silently if the item does not exist."""
+
+    async def search_items(self, params: ItemSearchParams) -> list[ItemOutputDTO]:
+        """Search items using optional price range and name filters.
+
+        *params* groups all filter and pagination fields.  Omit any field to
+        leave that dimension unconstrained.
+        """

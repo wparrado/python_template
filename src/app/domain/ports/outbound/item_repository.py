@@ -10,6 +10,7 @@ import uuid
 from abc import ABC, abstractmethod
 
 from app.domain.model.example.item import Item
+from app.domain.specifications.base import Specification
 
 _DEFAULT_LIMIT = 50
 
@@ -28,6 +29,10 @@ class IItemRepository(ABC):
     @abstractmethod
     async def find_all(self, limit: int = _DEFAULT_LIMIT, offset: int = 0) -> list[Item]:
         """Return items paginated by limit and offset."""
+
+    @abstractmethod
+    async def find_matching(self, spec: Specification[Item]) -> list[Item]:
+        """Return all items that satisfy *spec*."""
 
     @abstractmethod
     async def delete(self, item_id: uuid.UUID) -> None:

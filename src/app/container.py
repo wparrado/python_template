@@ -11,7 +11,7 @@ from app.application.handlers.command_handlers import (
     DeleteItemHandler,
     UpdateItemHandler,
 )
-from app.application.handlers.query_handlers import GetItemHandler, ListItemsHandler
+from app.application.handlers.query_handlers import GetItemHandler, ListItemsHandler, SearchItemsHandler
 from app.application.services.item_service import ItemApplicationService, ItemHandlers
 from app.infrastructure.events.in_process_publisher import InProcessEventPublisher
 from app.infrastructure.persistence.in_memory.item_repository import InMemoryItemRepository
@@ -47,6 +47,7 @@ class Container:
                 delete=self._delete_item_handler(),
                 get=self._get_item_handler(),
                 list_all=self._list_items_handler(),
+                search=self._search_items_handler(),
             )
         )
 
@@ -86,3 +87,7 @@ class Container:
     def _list_items_handler(self) -> ListItemsHandler:
         """Return a ListItemsHandler wired to the configured adapters."""
         return ListItemsHandler(repository=self._item_repository)
+
+    def _search_items_handler(self) -> SearchItemsHandler:
+        """Return a SearchItemsHandler wired to the configured adapters."""
+        return SearchItemsHandler(repository=self._item_repository)

@@ -34,6 +34,22 @@ class ItemUpdateDTO(BaseModel):
     description: str | None = Field(default=None, max_length=1000)
 
 
+class ItemSearchParams(BaseModel):
+    """Input parameters for searching items.
+
+    All filter and pagination fields are optional.
+    Omit a filter to leave that dimension unconstrained.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    min_price: Decimal | None = Field(default=None, ge=Decimal("0"))
+    max_price: Decimal | None = Field(default=None, ge=Decimal("0"))
+    name_contains: str | None = Field(default=None, min_length=1, max_length=255)
+    limit: int = Field(default=50, ge=1)
+    offset: int = Field(default=0, ge=0)
+
+
 class ItemOutputDTO(BaseModel):
     """Output representing an item returned from a use case."""
 

@@ -17,10 +17,12 @@ responses by the registered error handlers (see error_handlers.py).
 from __future__ import annotations
 
 import uuid
+from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
+from app.application.dtos.item_dtos import ItemSearchParams
 from app.application.ports.item_application_service import IItemApplicationService
 from app.presentation.app_state import get_app_state
 from app.presentation.api.v1.schemas.item_schemas import (
@@ -40,6 +42,32 @@ def _get_item_service(request: Request) -> IItemApplicationService:
     return get_app_state(request).item_service
 
 
+class _PaginationParams:
+    """Reusable FastAPI dependency for limit/offset pagination query params."""
+
+    def __init__(
+        self,
+        limit: int = Query(default=_DEFAULT_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE, description="Max items to return"),
+        offset: int = Query(default=0, ge=0, description="Number of items to skip"),
+    ) -> None:
+        self.limit = limit
+        self.offset = offset
+
+
+class _ItemSearchParams:
+    """FastAPI dependency that groups item search filter query parameters."""
+
+    def __init__(
+        self,
+        min_price: Decimal | None = Query(default=None, ge=0.0, description="Minimum price (inclusive)"),
+        max_price: Decimal | None = Query(default=None, ge=0.0, description="Maximum price (inclusive)"),
+        name_contains: str | None = Query(default=None, min_length=1, max_length=255, description="Name keyword"),
+    ) -> None:
+        self.min_price = min_price
+        self.max_price = max_price
+        self.name_contains = name_contains
+
+
 @router.post("", response_model=ItemResponse, status_code=status.HTTP_201_CREATED)
 async def create_item(
     body: CreateItemRequest,
@@ -53,11 +81,29 @@ async def create_item(
 @router.get("", response_model=list[ItemResponse])
 async def list_items(
     service: Annotated[IItemApplicationService, Depends(_get_item_service)],
-    limit: int = Query(default=_DEFAULT_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE, description="Max items to return"),
-    offset: int = Query(default=0, ge=0, description="Number of items to skip"),
+    pagination: Annotated[_PaginationParams, Depends()],
 ) -> list[ItemResponse]:
     """List items with optional pagination."""
-    dtos = await service.list_items(limit=limit, offset=offset)
+    dtos = await service.list_items(limit=pagination.limit, offset=pagination.offset)
+    return ItemSchemaMapper.to_response_list(dtos)
+
+
+@router.get("/search", response_model=list[ItemResponse])
+async def search_items(
+    service: Annotated[IItemApplicationService, Depends(_get_item_service)],
+    filters: Annotated[_ItemSearchParams, Depends()],
+    pagination: Annotated[_PaginationParams, Depends()],
+) -> list[ItemResponse]:
+    """Search items by optional price range and/or name keyword."""
+    dtos = await service.search_items(
+        ItemSearchParams(
+            min_price=filters.min_price,
+            max_price=filters.max_price,
+            name_contains=filters.name_contains,
+            limit=pagination.limit,
+            offset=pagination.offset,
+        )
+    )
     return ItemSchemaMapper.to_response_list(dtos)
 
 

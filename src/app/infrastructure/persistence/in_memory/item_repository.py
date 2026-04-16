@@ -14,6 +14,7 @@ import uuid
 
 from app.domain.model.example.item import Item
 from app.domain.ports.outbound.item_repository import IItemRepository
+from app.domain.specifications.base import Specification
 
 _DEFAULT_LIMIT = 50
 
@@ -33,6 +34,9 @@ class InMemoryItemRepository(IItemRepository):
     async def find_all(self, limit: int = _DEFAULT_LIMIT, offset: int = 0) -> list[Item]:
         items = list(self._store.values())
         return items[offset : offset + limit]
+
+    async def find_matching(self, spec: Specification[Item]) -> list[Item]:
+        return [item for item in self._store.values() if spec.is_satisfied_by(item)]
 
     async def delete(self, item_id: uuid.UUID) -> None:
         self._store.pop(item_id, None)

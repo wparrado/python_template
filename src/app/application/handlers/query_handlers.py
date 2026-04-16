@@ -11,10 +11,18 @@ from __future__ import annotations
 
 from app.application.dtos.item_dtos import ItemOutputDTO
 from app.application.mappers.item_mapper import ItemMapper
-from app.application.queries.item_queries import GetItemQuery, ListItemsQuery
+from app.application.queries.item_queries import GetItemQuery, ListItemsQuery, SearchItemsQuery
 from app.application.result import Failure, Result, Success
 from app.domain.exceptions.domain_errors import DomainError, ItemNotFoundError
 from app.domain.ports.outbound.item_repository import IItemRepository
+from app.domain.specifications.base import Specification
+from app.domain.specifications.item_specifications import (
+    ActiveItemSpecification,
+    AllItemsSpecification,
+    NameContainsSpecification,
+    PriceInRangeSpecification,
+)
+from app.domain.model.example.item import Item
 
 
 class GetItemHandler:
@@ -41,3 +49,29 @@ class ListItemsHandler:
         """Execute the query and return paginated items."""
         items = await self._repository.find_all(limit=query.limit, offset=query.offset)
         return Success(ItemMapper.to_output_dto_list(items))
+
+
+class SearchItemsHandler:
+    """Handles SearchItemsQuery — filters items using composable specifications."""
+
+    def __init__(self, repository: IItemRepository) -> None:
+        self._repository = repository
+
+    async def handle(self, query: SearchItemsQuery) -> Result[list[ItemOutputDTO], DomainError]:
+        """Build a composite specification from query params and delegate to the repository."""
+        spec = self._build_spec(query)
+        items = await self._repository.find_matching(spec)
+        paginated = items[query.offset : query.offset + query.limit]
+        return Success(ItemMapper.to_output_dto_list(paginated))
+
+    @staticmethod
+    def _build_spec(query: SearchItemsQuery) -> Specification[Item]:
+        """Compose a specification from the optional filter parameters."""
+        base: Specification[Item] = (
+            AllItemsSpecification() if query.include_deleted else ActiveItemSpecification()
+        )
+        if query.min_price is not None or query.max_price is not None:
+            base = base & PriceInRangeSpecification(query.min_price, query.max_price)
+        if query.name_contains is not None:
+            base = base & NameContainsSpecification(query.name_contains)
+        return base
