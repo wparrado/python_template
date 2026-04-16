@@ -12,6 +12,13 @@ repos:
       # ----------------------------------------------------------------
       # pre-commit: architectural enforcement only
       # ----------------------------------------------------------------
+      - id: protect-architecture-tests
+        name: protect — architectural tests are read-only
+        language: script
+        entry: scripts/protect_arch_tests.sh
+        stages: [pre-commit]
+        pass_filenames: false
+
       - id: tach-check
         name: tach — module boundary enforcement
         language: system
