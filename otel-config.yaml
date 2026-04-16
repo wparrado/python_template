@@ -1,0 +1,59 @@
+# OpenTelemetry Collector configuration example.
+# Uncomment the otel-collector service in docker-compose.yml and mount this file.
+#
+# This config fans out telemetry to multiple backends simultaneously.
+# Uncomment the exporters you want to use.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+exporters:
+  # ── Jaeger ─────────────────────────────────────────────────────────────────
+  # otlp/jaeger:
+  #   endpoint: jaeger:4317
+  #   tls:
+  #     insecure: true
+
+  # ── Grafana Tempo ──────────────────────────────────────────────────────────
+  # otlp/tempo:
+  #   endpoint: tempo:4317
+  #   tls:
+  #     insecure: true
+
+  # ── Datadog ────────────────────────────────────────────────────────────────
+  # datadog:
+  #   api:
+  #     key: "${DD_API_KEY}"
+
+  # ── AWS X-Ray ──────────────────────────────────────────────────────────────
+  # awsxray:
+  #   region: us-east-1
+
+  # ── Debug (logs everything to stdout) ─────────────────────────────────────
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]

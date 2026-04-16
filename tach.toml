@@ -1,0 +1,23 @@
+source_roots = ["src"]
+
+[[modules]]
+path = "app.domain"
+depends_on = []
+
+[[modules]]
+path = "app.application"
+depends_on = [{ path = "app.domain" }]
+
+[[modules]]
+path = "app.infrastructure"
+depends_on = [
+    { path = "app.domain" },
+    { path = "app.application" },
+]
+
+[[modules]]
+path = "app.presentation"
+depends_on = [
+    { path = "app.application" },
+    { path = "app.infrastructure" },
+]

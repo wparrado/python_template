@@ -1,0 +1,31 @@
+[importlinter]
+root_packages =
+    app
+
+[importlinter:contract:domain-independence]
+name = Domain has no outward dependencies
+type = forbidden
+source_modules =
+    app.domain
+forbidden_modules =
+    app.application
+    app.infrastructure
+    app.presentation
+
+[importlinter:contract:application-independence]
+name = Application does not depend on infrastructure or presentation
+type = forbidden
+source_modules =
+    app.application
+forbidden_modules =
+    app.infrastructure
+    app.presentation
+
+[importlinter:contract:layered-architecture]
+name = Layers follow hexagonal dependency order
+type = layers
+layers =
+    app.presentation
+    app.infrastructure
+    app.application
+    app.domain
