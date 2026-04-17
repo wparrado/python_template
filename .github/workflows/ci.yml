@@ -54,6 +54,8 @@ jobs:
     needs: build-ci-image
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: ci-image
@@ -63,10 +65,10 @@ jobs:
         run: docker load < /tmp/ci-image.tar.gz
 
       - name: Check formatting
-        run: docker run --rm python-template-ci:latest uv run ruff format --check src/ tests/
+        run: docker run --rm -v "$GITHUB_WORKSPACE/tests:/app/tests" python-template-ci:latest uv run ruff format --check src/ tests/
 
       - name: Lint
-        run: docker run --rm python-template-ci:latest uv run ruff check src/ tests/
+        run: docker run --rm -v "$GITHUB_WORKSPACE/tests:/app/tests" python-template-ci:latest uv run ruff check src/ tests/
 
   # ── 2. Mypy: strict type checking ─────────────────────────────────────────
   type-check:
@@ -116,6 +118,8 @@ jobs:
     needs: quality
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: ci-image
@@ -131,7 +135,7 @@ jobs:
         run: docker run --rm python-template-ci:latest uv run lint-imports
 
       - name: Run architecture tests (pytest-archon)
-        run: docker run --rm python-template-ci:latest uv run pytest tests/architecture/ -x -q
+        run: docker run --rm -v "$GITHUB_WORKSPACE/tests:/app/tests" python-template-ci:latest uv run pytest tests/architecture/ -x -q
 
   # ── 5. Tests: unit + integration, matrix 3.12 & 3.13 ─────────────────────
   test:
@@ -164,6 +168,7 @@ jobs:
       - name: Run tests
         run: |
           docker run --rm \
+            -v "$GITHUB_WORKSPACE/tests:/app/tests" \
             -e APP_NAME=test \
             -e DEBUG=false \
             -e OIDC_ISSUER="" \
