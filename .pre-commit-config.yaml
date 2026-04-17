@@ -22,21 +22,21 @@ repos:
       - id: tach-check
         name: tach — module boundary enforcement
         language: system
-        entry: uv run tach check
+        entry: bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv run tach check'
         stages: [pre-commit]
         pass_filenames: false
 
       - id: import-linter
         name: import-linter — layered dependency contracts
         language: system
-        entry: uv run lint-imports
+        entry: bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv run lint-imports'
         stages: [pre-commit]
         pass_filenames: false
 
       - id: architecture-tests
         name: pytest-archon — architectural rule tests
         language: system
-        entry: uv run pytest tests/architecture/ -x -q
+        entry: bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv run pytest tests/architecture/ -x -q'
         stages: [pre-commit]
         pass_filenames: false
 
@@ -46,13 +46,13 @@ repos:
       - id: mypy
         name: mypy — strict type checking
         language: system
-        entry: bash -c 'MYPYPATH=src uv run mypy --explicit-package-bases $(find src/app -name "*.py" | tr "\n" " ")'
+        entry: bash -c 'export PATH="$HOME/.local/bin:$PATH" && MYPYPATH=src uv run mypy --explicit-package-bases $(find src/app -name "*.py" | tr "\n" " ")'
         stages: [pre-push]
         pass_filenames: false
 
       - id: pylint
         name: pylint — code quality (must score 10/10)
         language: system
-        entry: bash -c 'PYTHONPATH=src uv run pylint src/app --fail-under=10'
+        entry: bash -c 'export PATH="$HOME/.local/bin:$PATH" && PYTHONPATH=src uv run pylint src/app --fail-under=10'
         stages: [pre-push]
         pass_filenames: false

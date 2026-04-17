@@ -1,0 +1,29 @@
+# CI image — installs all dependency groups so every quality gate runs
+# in an identical, reproducible environment.
+#
+# Build:  docker build -f Dockerfile.ci -t python-template-ci .
+# Usage:  docker run --rm python-template-ci uv run pytest
+
+ARG PYTHON_VERSION=3.12
+FROM python:${PYTHON_VERSION}-slim
+
+WORKDIR /app
+
+# Install uv from the official image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# ── Dependency layer (cached as long as lock file doesn't change) ────────────
+COPY pyproject.toml uv.lock ./
+
+# Install all groups: runtime + dev + test + lint + type-check + docs
+RUN uv sync --all-groups --no-editable
+
+# ── Application source and configuration ────────────────────────────────────
+COPY src/ ./src/
+COPY tests/ ./tests/
+COPY tach.toml .importlinter ./
+
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app/src"
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1

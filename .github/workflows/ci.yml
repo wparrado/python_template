@@ -2,9 +2,9 @@ name: CI — Quality Gate
 
 on:
   pull_request:
-    branches: [main]
+    branches: [master, main]
   push:
-    branches: [main]
+    branches: [master, main]
 
 # Cancel in-progress runs for the same PR/branch to avoid wasted compute
 concurrency:
@@ -15,29 +15,58 @@ permissions:
   contents: read
 
 jobs:
-  # ── 1. Ruff: format check + lint ──────────────────────────────────────────
-  lint:
-    name: Lint (ruff)
+  # ── 0. Build CI Docker image (shared across all jobs via GHA cache) ────────
+  build-ci-image:
+    name: Build CI image
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install dependencies
-        run: uv sync --all-groups
+      - name: Build and export CI image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.ci
+          load: true
+          tags: python-template-ci:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Save image as artifact
+        run: docker save python-template-ci:latest | gzip > /tmp/ci-image.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-image
+          path: /tmp/ci-image.tar.gz
+          retention-days: 1
+
+  # ── 1. Ruff: format check + lint ──────────────────────────────────────────
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-ci-image
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ci-image
+          path: /tmp
+
+      - name: Load CI image
+        run: docker load < /tmp/ci-image.tar.gz
 
       - name: Check formatting
-        run: uv run ruff format --check src/ tests/
+        run: docker run --rm python-template-ci:latest uv run ruff format --check src/ tests/
 
       - name: Lint
-        run: uv run ruff check src/ tests/
+        run: docker run --rm python-template-ci:latest uv run ruff check src/ tests/
 
   # ── 2. Mypy: strict type checking ─────────────────────────────────────────
   type-check:
@@ -47,19 +76,18 @@ jobs:
     needs: lint
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+      - uses: actions/download-artifact@v4
         with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          name: ci-image
+          path: /tmp
 
-      - name: Install dependencies
-        run: uv sync --all-groups
+      - name: Load CI image
+        run: docker load < /tmp/ci-image.tar.gz
 
       - name: Run mypy (strict)
-        run: MYPYPATH=src uv run mypy --explicit-package-bases $(find src/app -name "*.py" | tr "\n" " ")
+        run: |
+          docker run --rm python-template-ci:latest bash -c \
+            'MYPYPATH=src uv run mypy --explicit-package-bases $(find src/app -name "*.py" | tr "\n" " ")'
 
   # ── 3. Pylint: score must be 10/10 ────────────────────────────────────────
   quality:
@@ -69,19 +97,16 @@ jobs:
     needs: type-check
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+      - uses: actions/download-artifact@v4
         with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          name: ci-image
+          path: /tmp
 
-      - name: Install dependencies
-        run: uv sync --all-groups
+      - name: Load CI image
+        run: docker load < /tmp/ci-image.tar.gz
 
       - name: Run pylint
-        run: PYTHONPATH=src uv run pylint src/app --fail-under=10
+        run: docker run --rm python-template-ci:latest uv run pylint src/app --fail-under=10
 
   # ── 4. Architecture: tach + import-linter + pytest-archon ─────────────────
   architecture:
@@ -91,25 +116,22 @@ jobs:
     needs: quality
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+      - uses: actions/download-artifact@v4
         with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          name: ci-image
+          path: /tmp
 
-      - name: Install dependencies
-        run: uv sync --all-groups
+      - name: Load CI image
+        run: docker load < /tmp/ci-image.tar.gz
 
       - name: Check module boundaries (tach)
-        run: uv run tach check
+        run: docker run --rm python-template-ci:latest uv run tach check
 
       - name: Check import rules (import-linter)
-        run: uv run lint-imports
+        run: docker run --rm python-template-ci:latest uv run lint-imports
 
       - name: Run architecture tests (pytest-archon)
-        run: uv run pytest tests/architecture/ -x -q
+        run: docker run --rm python-template-ci:latest uv run pytest tests/architecture/ -x -q
 
   # ── 5. Tests: unit + integration, matrix 3.12 & 3.13 ─────────────────────
   test:
@@ -122,25 +144,29 @@ jobs:
       matrix:
         python-version: ["3.12", "3.13"]
 
-    # Environment variables required by the test suite
-    env:
-      APP_NAME: test
-      DEBUG: "false"
-      OIDC_ISSUER: ""
-      OTEL_ENABLED: "false"
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up uv (Python ${{ matrix.python-version }})
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-          python-version: ${{ matrix.python-version }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install dependencies
-        run: uv sync --all-groups
+      - name: Build CI image for Python ${{ matrix.python-version }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.ci
+          build-args: PYTHON_VERSION=${{ matrix.python-version }}
+          load: true
+          tags: python-template-ci:${{ matrix.python-version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run tests
-        run: uv run pytest tests/ -x -q --ignore=tests/architecture
+        run: |
+          docker run --rm \
+            -e APP_NAME=test \
+            -e DEBUG=false \
+            -e OIDC_ISSUER="" \
+            -e OTEL_ENABLED=false \
+            python-template-ci:${{ matrix.python-version }} \
+            uv run pytest tests/ -x -q --ignore=tests/architecture
