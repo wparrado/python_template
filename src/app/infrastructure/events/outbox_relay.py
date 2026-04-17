@@ -85,9 +85,7 @@ class OutboxRelay:
         while True:
             try:
                 await self._process_batch()
-            except asyncio.CancelledError:
-                raise
-            except Exception:  # noqa: BLE001
+            except Exception:
                 logger.exception("outbox_relay.poll_error")
             await asyncio.sleep(self._poll_interval)
 
@@ -115,7 +113,7 @@ class OutboxRelay:
                             event_type=row.event_type,
                             event_id=str(row.id),
                         )
-                    except Exception:  # noqa: BLE001
+                    except Exception:  # noqa: BLE001  # pylint: disable=broad-exception-caught
                         logger.exception(
                             "outbox_relay.dispatch_error",
                             event_type=row.event_type,

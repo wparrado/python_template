@@ -12,15 +12,14 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi import _rate_limit_exceeded_handler  # type: ignore[attr-defined]
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.container import Container
-from app.infrastructure.auth.oidc_verifier import OidcVerifier
+from app.infrastructure.auth.oidc_verifier import OidcVerifier, make_current_user_dependency
 from app.infrastructure.observability.logging import configure_logging
 from app.infrastructure.observability.metrics import configure_metrics
 from app.infrastructure.observability.tracing import configure_tracing
@@ -79,8 +78,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         debug=settings.debug,
         lifespan=lifespan,
     )
-
-    from app.infrastructure.auth.oidc_verifier import make_current_user_dependency
 
     container = Container(settings)
     oidc_verifier = OidcVerifier(settings, circuit_breaker=container.circuit_breaker())

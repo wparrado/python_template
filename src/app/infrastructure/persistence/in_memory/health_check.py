@@ -19,8 +19,5 @@ class InMemoryRepositoryHealthCheck(IHealthCheck):
 
     async def check(self) -> HealthStatus:
         """Confirm the repository store is accessible."""
-        try:
-            await self._repository.count()
-            return HealthStatus(name="in_memory_repository", healthy=True)
-        except Exception as exc:  # noqa: BLE001
-            return HealthStatus(name="in_memory_repository", healthy=False, detail=str(exc))
+        await self._repository.count()
+        return HealthStatus(name="in_memory_repository", healthy=True)

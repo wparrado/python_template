@@ -32,6 +32,11 @@ import asyncio
 
 import structlog
 
+try:
+    from aiokafka import AIOKafkaConsumer
+except ImportError:
+    AIOKafkaConsumer = None  # type: ignore[assignment, misc]
+
 from app.infrastructure.events.consumer.base import BrokerEventConsumer
 from app.infrastructure.events.in_process_publisher import InProcessEventPublisher
 from app.infrastructure.events.serialization import deserialize
@@ -83,12 +88,8 @@ class KafkaEventConsumer(BrokerEventConsumer):
 
     async def start(self) -> None:
         """Start the Kafka consumer and begin polling in a background task."""
-        try:
-            from aiokafka import AIOKafkaConsumer  # noqa: PLC0415
-        except ImportError as exc:  # pragma: no cover
-            raise ImportError(
-                "aiokafka is required. Install with: uv add aiokafka"
-            ) from exc
+        if AIOKafkaConsumer is None:
+            raise ImportError("aiokafka is required. Install with: uv add aiokafka")
 
         self._consumer = AIOKafkaConsumer(
             *self._topics,
@@ -144,9 +145,7 @@ class KafkaEventConsumer(BrokerEventConsumer):
                     topic=msg.topic,
                     offset=msg.offset,
                 )
-            except asyncio.CancelledError:
-                raise
-            except Exception:  # noqa: BLE001
+            except Exception:
                 logger.exception(
                     "kafka_consumer.dispatch_error",
                     topic=msg.topic,

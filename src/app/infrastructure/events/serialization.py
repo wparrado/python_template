@@ -50,8 +50,8 @@ def _is_optional(hint: Any) -> tuple[bool, Any]:
     origin = get_origin(hint)
     if origin in (Union, types.UnionType):
         args = get_args(hint)
-        non_none = [a for a in args if a is not type(None)]
-        if type(None) in args and len(non_none) == 1:
+        non_none = [a for a in args if a is not types.NoneType]
+        if types.NoneType in args and len(non_none) == 1:
             return True, non_none[0]
     return False, hint
 

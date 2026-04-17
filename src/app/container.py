@@ -228,7 +228,9 @@ class Container:
                 ),
                 build_handlers=_build_category_handlers,
                 build_service=lambda h: CategoryApplicationService(handlers=h),
-                in_memory_repo=self._persistence.in_memory_category_repo if not self._persistence.is_sqlalchemy else None,
+                in_memory_repo=(
+                    self._persistence.in_memory_category_repo if not self._persistence.is_sqlalchemy else None
+                ),
                 in_memory_uow=lambda r: InMemoryCategoryUnitOfWork(
                     repository=r, publisher=self._events.in_process_publisher
                 ),

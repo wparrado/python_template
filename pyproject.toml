@@ -88,6 +88,14 @@ fail-under = 8.0
 [tool.pylint.format]
 max-line-length = 120
 
+[tool.pylint.basic]
+# TypeVar names like TService, TRepo, THandlers are clear and idiomatic
+typevar-rgx = "[A-Z][A-Za-z]*"
+
+[tool.pylint.design]
+# Specification translators use a branch-per-type pattern that naturally has many returns
+max-returns = 8
+
 [tool.pylint."messages control"]
 disable = [
     "missing-module-docstring",
@@ -96,6 +104,7 @@ disable = [
     "duplicate-code",  # DTOs and response schemas intentionally mirror structure
     "R0913",  # too-many-arguments: domain factory/update methods legitimately have many params
     "R0917",  # too-many-positional-arguments: same rationale as R0913
+    "W0718",  # broad-exception-caught: async consumer/relay loops must survive any handler exception
 ]
 
 # ---------------------------------------------------------------------------

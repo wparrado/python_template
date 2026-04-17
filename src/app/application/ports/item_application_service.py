@@ -31,7 +31,9 @@ class IItemApplicationService(Protocol):
     handle them without importing from the domain directly.
     """
 
-    async def create_item(self, name: str, price: Decimal, description: str, category_id: uuid.UUID | None = None) -> ItemOutputDTO:
+    async def create_item(
+        self, name: str, price: Decimal, description: str, category_id: uuid.UUID | None = None
+    ) -> ItemOutputDTO:
         """Create a new item and return its DTO."""
 
     async def get_item(self, item_id: uuid.UUID) -> ItemOutputDTO:

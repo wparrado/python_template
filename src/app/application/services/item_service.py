@@ -61,7 +61,9 @@ class ItemApplicationService(IItemApplicationService):
         """Wire the service with its grouped command and query handlers."""
         self._handlers = handlers
 
-    async def create_item(self, name: str, price: Decimal, description: str, category_id: uuid.UUID | None = None) -> ItemOutputDTO:
+    async def create_item(
+        self, name: str, price: Decimal, description: str, category_id: uuid.UUID | None = None
+    ) -> ItemOutputDTO:
         """Create a new item and return its DTO."""
         result = await self._handlers.create.handle(
             CreateItemCommand(name=name, price=price, description=description, category_id=category_id)

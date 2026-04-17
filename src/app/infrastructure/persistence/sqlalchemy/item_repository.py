@@ -10,7 +10,8 @@ from __future__ import annotations
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import func as sql_func, select
+from sqlalchemy import false, select
+from sqlalchemy.sql.functions import count as sql_count
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.constants import DEFAULT_PAGE_SIZE
@@ -44,7 +45,7 @@ class SQLAlchemyItemRepository(IItemRepository):
 
     async def find_by_id(self, item_id: uuid.UUID) -> Item | None:
         """Return the active item with *item_id*, or ``None`` if not found or soft-deleted."""
-        stmt = select(ItemORM).where(ItemORM.id == item_id, ItemORM.is_deleted == False)  # noqa: E712
+        stmt = select(ItemORM).where(ItemORM.id == item_id, ItemORM.is_deleted == false())
         result = await self._session.execute(stmt)
         row = result.scalar_one_or_none()
         return self._to_domain(row) if row is not None else None
@@ -53,7 +54,7 @@ class SQLAlchemyItemRepository(IItemRepository):
         """Return active items paginated by *limit* and *offset*."""
         stmt = (
             select(ItemORM)
-            .where(ItemORM.is_deleted == False)  # noqa: E712
+            .where(ItemORM.is_deleted == false())
             .offset(offset)
             .limit(limit)
         )
@@ -78,10 +79,10 @@ class SQLAlchemyItemRepository(IItemRepository):
     async def count(self, spec: Specification[Item] | None = None) -> int:
         """Return total count matching *spec* (SQL WHERE clause), or all active items."""
         if spec is None:
-            stmt = select(sql_func.count()).select_from(ItemORM).where(ItemORM.is_deleted == False)  # noqa: E712
+            stmt = select(sql_count()).select_from(ItemORM).where(ItemORM.is_deleted == false())
         else:
             clause = ItemSpecificationTranslator.translate(spec)
-            stmt = select(sql_func.count()).select_from(ItemORM).where(clause)
+            stmt = select(sql_count()).select_from(ItemORM).where(clause)
         result = await self._session.execute(stmt)
         return result.scalar_one()
 

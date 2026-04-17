@@ -89,7 +89,8 @@ class UpdateItemHandler:
                 and self._category_uow is not None
             ):
                 async with self._category_uow:
-                    category = await self._category_uow.repository.find_by_id(command.category_id)  # type: ignore[arg-type]
+                    cat_repo = self._category_uow.repository
+                    category = await cat_repo.find_by_id(command.category_id)  # type: ignore[arg-type]
                     if category is None:
                         return Failure(CategoryNotFoundError(str(command.category_id)))
             async with self._uow:

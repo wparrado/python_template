@@ -40,6 +40,11 @@ from __future__ import annotations
 
 import structlog
 
+try:
+    from aiokafka import AIOKafkaProducer
+except ImportError:
+    AIOKafkaProducer = None  # type: ignore[assignment, misc]
+
 from app.domain.events.base import DomainEvent
 from app.infrastructure.events.broker.base import BrokerEventPublisher
 from app.infrastructure.events.serialization import serialize
@@ -79,13 +84,11 @@ class KafkaEventPublisher(BrokerEventPublisher):
 
     async def connect(self) -> None:
         """Create and start the Kafka producer."""
-        try:
-            from aiokafka import AIOKafkaProducer  # noqa: PLC0415 — optional dependency
-        except ImportError as exc:  # pragma: no cover
+        if AIOKafkaProducer is None:
             raise ImportError(
                 "aiokafka is required for Kafka support. "
                 "Install it with: uv add aiokafka"
-            ) from exc
+            )
 
         self._producer = AIOKafkaProducer(
             bootstrap_servers=self._bootstrap_servers,

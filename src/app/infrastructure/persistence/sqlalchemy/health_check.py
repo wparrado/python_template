@@ -6,6 +6,7 @@ Verifies database connectivity by executing a lightweight ``SELECT 1`` probe.
 from __future__ import annotations
 
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.application.ports.health_check import HealthStatus, IHealthCheck
@@ -24,5 +25,5 @@ class SQLAlchemyHealthCheck(IHealthCheck):
             async with self._engine.connect() as conn:
                 await conn.execute(text("SELECT 1"))
             return HealthStatus(name="postgresql", healthy=True)
-        except Exception as exc:  # noqa: BLE001
+        except SQLAlchemyError as exc:
             return HealthStatus(name="postgresql", healthy=False, detail=str(exc))

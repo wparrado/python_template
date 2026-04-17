@@ -40,4 +40,4 @@ class IClock(Protocol):
 
     def now(self) -> datetime:
         """Return the current date and time."""
-        ...
+        raise NotImplementedError

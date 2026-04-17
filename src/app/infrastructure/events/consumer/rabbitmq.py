@@ -35,6 +35,11 @@ import asyncio
 
 import structlog
 
+try:
+    import aio_pika
+except ImportError:
+    aio_pika = None  # type: ignore[assignment]
+
 from app.infrastructure.events.consumer.base import BrokerEventConsumer
 from app.infrastructure.events.in_process_publisher import InProcessEventPublisher
 from app.infrastructure.events.serialization import deserialize
@@ -84,12 +89,8 @@ class RabbitMQEventConsumer(BrokerEventConsumer):
 
     async def start(self) -> None:
         """Connect to RabbitMQ and start consuming in a background task."""
-        try:
-            import aio_pika  # noqa: PLC0415
-        except ImportError as exc:  # pragma: no cover
-            raise ImportError(
-                "aio-pika is required. Install with: uv add aio-pika"
-            ) from exc
+        if aio_pika is None:
+            raise ImportError("aio-pika is required. Install with: uv add aio-pika")
 
         self._connection = await aio_pika.connect_robust(self._url)
         channel = await self._connection.channel()  # type: ignore[union-attr]
@@ -145,7 +146,7 @@ class RabbitMQEventConsumer(BrokerEventConsumer):
                             event_type=event_type,
                             queue=self._queue,
                         )
-                    except Exception:  # noqa: BLE001
+                    except Exception:
                         logger.exception(
                             "rabbitmq_consumer.dispatch_error",
                             queue=self._queue,

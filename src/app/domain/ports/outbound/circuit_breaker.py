@@ -21,4 +21,4 @@ class ICircuitBreaker(Protocol):
         Raises ``CircuitBreakerError`` (or an application-level equivalent)
         when the circuit is open and calls are rejected.
         """
-        ...
+        raise NotImplementedError

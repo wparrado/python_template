@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import func as sql_func, select
+from sqlalchemy import false, select
+from sqlalchemy.sql.functions import count as sql_count
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.constants import DEFAULT_PAGE_SIZE
@@ -50,7 +51,7 @@ class SQLAlchemyCategoryRepository(ICategoryRepository):
     async def find_by_id(self, category_id: uuid.UUID) -> Category | None:
         """Return the active category with *category_id*, or ``None`` if not found or soft-deleted."""
         stmt = select(CategoryORM).where(
-            CategoryORM.id == category_id, CategoryORM.is_deleted == False  # noqa: E712
+            CategoryORM.id == category_id, CategoryORM.is_deleted == false()
         )
         result = await self._session.execute(stmt)
         row = result.scalar_one_or_none()
@@ -59,7 +60,7 @@ class SQLAlchemyCategoryRepository(ICategoryRepository):
     async def find_by_slug(self, slug: str) -> Category | None:
         """Return the active category with *slug*, or ``None`` if not found or soft-deleted."""
         stmt = select(CategoryORM).where(
-            CategoryORM.slug == slug, CategoryORM.is_deleted == False  # noqa: E712
+            CategoryORM.slug == slug, CategoryORM.is_deleted == false()
         )
         result = await self._session.execute(stmt)
         row = result.scalar_one_or_none()
@@ -69,7 +70,7 @@ class SQLAlchemyCategoryRepository(ICategoryRepository):
         """Return active categories paginated by *limit* and *offset*."""
         stmt = (
             select(CategoryORM)
-            .where(CategoryORM.is_deleted == False)  # noqa: E712
+            .where(CategoryORM.is_deleted == false())
             .offset(offset)
             .limit(limit)
         )
@@ -95,13 +96,13 @@ class SQLAlchemyCategoryRepository(ICategoryRepository):
         """Return total count matching *spec* (SQL WHERE clause), or all active categories."""
         if spec is None:
             stmt = (
-                select(sql_func.count())
+                select(sql_count())
                 .select_from(CategoryORM)
-                .where(CategoryORM.is_deleted == False)  # noqa: E712
+                .where(CategoryORM.is_deleted == false())
             )
         else:
             clause = CategorySpecificationTranslator.translate(spec)
-            stmt = select(sql_func.count()).select_from(CategoryORM).where(clause)
+            stmt = select(sql_count()).select_from(CategoryORM).where(clause)
         result = await self._session.execute(stmt)
         return result.scalar_one()
 

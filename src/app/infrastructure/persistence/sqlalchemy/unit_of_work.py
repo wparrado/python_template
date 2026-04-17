@@ -35,9 +35,10 @@ Two publishing modes are supported via the ``use_outbox`` flag:
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Callable
 from types import TracebackType
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -47,6 +48,14 @@ from app.application.ports.unit_of_work import IUnitOfWork
 from app.infrastructure.events.outbox_publisher import OutboxEventPublisher
 
 TRepo = TypeVar("TRepo")
+
+
+@dataclasses.dataclass(frozen=True)
+class _UoWConfig:
+    session_factory: async_sessionmaker[AsyncSession]
+    repo_factory: Callable[[AsyncSession], Any]
+    publisher: IDomainEventPublisher
+    use_outbox: bool = False
 
 
 class SQLAlchemyUnitOfWork(IUnitOfWork[TRepo], Generic[TRepo]):
@@ -74,20 +83,22 @@ class SQLAlchemyUnitOfWork(IUnitOfWork[TRepo], Generic[TRepo]):
         use_outbox: bool = False,
     ) -> None:
         """Initialise the UoW with a session factory, repo factory, publisher and outbox flag."""
-        self._session_factory = session_factory
-        self._repo_factory = repo_factory
-        self._publisher = publisher
-        self._use_outbox = use_outbox
+        self._config = _UoWConfig(
+            session_factory=session_factory,
+            repo_factory=repo_factory,
+            publisher=publisher,
+            use_outbox=use_outbox,
+        )
         self._pending_events: list[DomainEvent] = []
         self._session: AsyncSession | None = None
         self._active_publisher: IDomainEventPublisher = publisher
 
     async def __aenter__(self) -> SQLAlchemyUnitOfWork[TRepo]:
         """Open a new async session, build the repository and select the publisher."""
-        self._session = self._session_factory()
-        self.repository = self._repo_factory(self._session)
+        self._session = self._config.session_factory()
+        self.repository = self._config.repo_factory(self._session)
         self._active_publisher = (
-            OutboxEventPublisher(self._session) if self._use_outbox else self._publisher
+            OutboxEventPublisher(self._session) if self._config.use_outbox else self._config.publisher
         )
         return self
 
@@ -115,7 +126,7 @@ class SQLAlchemyUnitOfWork(IUnitOfWork[TRepo], Generic[TRepo]):
         * In-process mode: commits first, then dispatches immediately.
         """
         if self._session is not None:
-            if self._use_outbox:
+            if self._config.use_outbox:
                 # Write outbox rows into the session (no flush yet)
                 for event in self._pending_events:
                     await self._active_publisher.publish(event)

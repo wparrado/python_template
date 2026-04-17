@@ -40,6 +40,11 @@ from __future__ import annotations
 
 import structlog
 
+try:
+    import aio_pika
+except ImportError:
+    aio_pika = None  # type: ignore[assignment]
+
 from app.domain.events.base import DomainEvent
 from app.infrastructure.events.broker.base import BrokerEventPublisher
 from app.infrastructure.events.serialization import serialize
@@ -72,13 +77,11 @@ class RabbitMQEventPublisher(BrokerEventPublisher):
 
     async def connect(self) -> None:
         """Open a robust connection and declare the topic exchange."""
-        try:
-            import aio_pika  # noqa: PLC0415 — optional dependency
-        except ImportError as exc:  # pragma: no cover
+        if aio_pika is None:
             raise ImportError(
                 "aio-pika is required for RabbitMQ support. "
                 "Install it with: uv add aio-pika"
-            ) from exc
+            )
 
         self._connection = await aio_pika.connect_robust(self._url)
         channel = await self._connection.channel()  # type: ignore[union-attr]
@@ -121,12 +124,8 @@ class RabbitMQEventPublisher(BrokerEventPublisher):
                 "RabbitMQEventPublisher is not connected. Call connect() first."
             )
 
-        try:
-            import aio_pika  # noqa: PLC0415 — optional dependency
-        except ImportError as exc:  # pragma: no cover
-            raise ImportError(
-                "aio-pika is required for RabbitMQ support."
-            ) from exc
+        if aio_pika is None:
+            raise ImportError("aio-pika is required for RabbitMQ support.")
 
         body = serialize(event).encode()
         message = aio_pika.Message(
