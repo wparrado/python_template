@@ -62,12 +62,11 @@ from app.infrastructure.resilience.pybreaker_adapter import PyBreakerAdapter
 from app.settings import Settings
 
 TService = TypeVar("TService")
-TRepo = TypeVar("TRepo")
 THandlers = TypeVar("THandlers")
 
 
 @dataclass
-class AggregateModule(Generic[TService, TRepo, THandlers]):
+class AggregateModule(Generic[TService, THandlers]):
     """Wiring configuration for one aggregate service.
 
     Captures what *varies* between aggregates so that ``_build_dep`` can
@@ -94,12 +93,12 @@ class AggregateModule(Generic[TService, TRepo, THandlers]):
         Factory that builds an in-memory UoW from the given repository.
     """
 
-    repo_factory: Callable[[AsyncSession], TRepo]
-    uow_factory: Callable[[async_sessionmaker[AsyncSession]], IUnitOfWork[TRepo]]
-    build_handlers: Callable[[IUnitOfWork[TRepo], TRepo], THandlers]
+    repo_factory: Callable[..., Any]
+    uow_factory: Callable[[async_sessionmaker[AsyncSession]], IUnitOfWork[Any]]
+    build_handlers: Callable[..., THandlers]
     build_service: Callable[[THandlers], TService]
-    in_memory_repo: TRepo | None
-    in_memory_uow: Callable[[TRepo], IUnitOfWork[TRepo]]
+    in_memory_repo: Any | None
+    in_memory_uow: Callable[[Any], IUnitOfWork[Any]]
 
 
 class Container:
@@ -243,7 +242,7 @@ class Container:
 
     def _build_dep(
         self,
-        module: AggregateModule[TService, TRepo, THandlers],
+        module: AggregateModule[TService, THandlers],
     ) -> Callable[[], AsyncGenerator[TService, None]]:
         """Single lifecycle factory for any aggregate service.
 

@@ -57,18 +57,18 @@ class ItemSpecificationTranslator:
             return true()
 
         if isinstance(spec, ActiveItemSpecification):
-            return ItemORM.is_deleted == false()  # type: ignore[return-value]
+            return ItemORM.is_deleted == false()
 
         if isinstance(spec, PriceInRangeSpecification):
             clauses: list[ColumnElement[bool]] = []
             if spec.min_price is not None:
-                clauses.append(ItemORM.price >= spec.min_price)  # type: ignore[operator]
+                clauses.append(ItemORM.price >= spec.min_price)
             if spec.max_price is not None:
-                clauses.append(ItemORM.price <= spec.max_price)  # type: ignore[operator]
+                clauses.append(ItemORM.price <= spec.max_price)
             return and_(*clauses) if clauses else true()
 
         if isinstance(spec, NameContainsSpecification):
-            return sql_func.lower(ItemORM.name).contains(spec.keyword)  # type: ignore[return-value]
+            return sql_func.lower(ItemORM.name).contains(spec.keyword)
 
         if isinstance(spec, AndSpecification):
             return and_(cls.translate(spec.left), cls.translate(spec.right))

@@ -11,10 +11,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any, cast
 
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from slowapi import _rate_limit_exceeded_handler  # type: ignore[attr-defined]
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
@@ -109,7 +110,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Error handlers
     register_error_handlers(fastapi_app)
-    fastapi_app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    fastapi_app.add_exception_handler(RateLimitExceeded, cast(Any, _rate_limit_exceeded_handler))
 
     # Routers
     fastapi_app.include_router(health.router)

@@ -77,6 +77,10 @@ explicit_package_bases = true
 module = ["opentelemetry.*", "authlib.*", "granian.*"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["aio_pika", "aiokafka", "aiokafka.*"]
+ignore_missing_imports = true
+
 # ---------------------------------------------------------------------------
 # Pylint
 # ---------------------------------------------------------------------------

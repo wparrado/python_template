@@ -33,12 +33,14 @@ from __future__ import annotations
 
 import asyncio
 
+from typing import Any
+
 import structlog
 
 try:
     import aio_pika
 except ImportError:
-    aio_pika = None  # type: ignore[assignment]
+    aio_pika = None
 
 from app.infrastructure.events.consumer.base import BrokerEventConsumer
 from app.infrastructure.events.in_process_publisher import InProcessEventPublisher
@@ -80,7 +82,7 @@ class RabbitMQEventConsumer(BrokerEventConsumer):
         self._queue = queue
         self._publisher = publisher
         self._routing_keys = routing_keys or ["#"]
-        self._connection: object | None = None
+        self._connection: Any | None = None
         self._task: asyncio.Task[None] | None = None
 
     # ------------------------------------------------------------------
@@ -93,7 +95,7 @@ class RabbitMQEventConsumer(BrokerEventConsumer):
             raise ImportError("aio-pika is required. Install with: uv add aio-pika")
 
         self._connection = await aio_pika.connect_robust(self._url)
-        channel = await self._connection.channel()  # type: ignore[union-attr]
+        channel = await self._connection.channel()
         exchange = await channel.declare_exchange(
             self._exchange, aio_pika.ExchangeType.TOPIC, durable=True
         )
@@ -118,7 +120,7 @@ class RabbitMQEventConsumer(BrokerEventConsumer):
             await asyncio.gather(self._task, return_exceptions=True)
             self._task = None
         if self._connection is not None:
-            await self._connection.close()  # type: ignore[union-attr]
+            await self._connection.close()
             self._connection = None
         logger.info("rabbitmq_consumer.stopped", queue=self._queue)
 
@@ -131,14 +133,14 @@ class RabbitMQEventConsumer(BrokerEventConsumer):
     # Internal
     # ------------------------------------------------------------------
 
-    async def _consume(self, queue: object) -> None:
+    async def _consume(self, queue: Any) -> None:
         """Main consume loop — ack after successful dispatch."""
-        async with queue.iterator() as messages:  # type: ignore[union-attr]
+        async with queue.iterator() as messages:
             async for message in messages:
-                async with message.process():  # type: ignore[union-attr]
+                async with message.process():
                     try:
-                        event_type = message.headers.get("event_type", "")  # type: ignore[union-attr]
-                        body = message.body.decode()  # type: ignore[union-attr]
+                        event_type = message.headers.get("event_type", "")
+                        body = message.body.decode()
                         event = deserialize(event_type, body)
                         await self._publisher.publish(event)
                         logger.debug(

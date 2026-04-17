@@ -30,12 +30,14 @@ from __future__ import annotations
 
 import asyncio
 
+from typing import Any
+
 import structlog
 
 try:
     from aiokafka import AIOKafkaConsumer
 except ImportError:
-    AIOKafkaConsumer = None  # type: ignore[assignment, misc]
+    AIOKafkaConsumer = None
 
 from app.infrastructure.events.consumer.base import BrokerEventConsumer
 from app.infrastructure.events.in_process_publisher import InProcessEventPublisher
@@ -79,7 +81,7 @@ class KafkaEventConsumer(BrokerEventConsumer):
         self._group_id = group_id
         self._publisher = publisher
         self._auto_offset_reset = auto_offset_reset
-        self._consumer: object | None = None
+        self._consumer: Any | None = None
         self._task: asyncio.Task[None] | None = None
 
     # ------------------------------------------------------------------
@@ -99,7 +101,7 @@ class KafkaEventConsumer(BrokerEventConsumer):
             enable_auto_commit=False,  # manual commit after dispatch
             value_deserializer=lambda v: v.decode(),
         )
-        await self._consumer.start()  # type: ignore[union-attr]
+        await self._consumer.start()
         self._task = asyncio.create_task(
             self._poll(), name=f"consumer.kafka.{self._group_id}"
         )
@@ -116,7 +118,7 @@ class KafkaEventConsumer(BrokerEventConsumer):
             await asyncio.gather(self._task, return_exceptions=True)
             self._task = None
         if self._consumer is not None:
-            await self._consumer.stop()  # type: ignore[union-attr]
+            await self._consumer.stop()
             self._consumer = None
         logger.info("kafka_consumer.stopped", group_id=self._group_id)
 
@@ -131,14 +133,16 @@ class KafkaEventConsumer(BrokerEventConsumer):
 
     async def _poll(self) -> None:
         """Main poll loop — commit offset after each successful dispatch."""
-        async for msg in self._consumer:  # type: ignore[union-attr]
+        if self._consumer is None:
+            return
+        async for msg in self._consumer:
             try:
                 # Header lookup: headers is a list of (key, bytes) tuples
                 headers = dict(msg.headers)
                 event_type = headers.get("event_type", b"").decode()
                 event = deserialize(event_type, msg.value)
                 await self._publisher.publish(event)
-                await self._consumer.commit()  # type: ignore[union-attr]
+                await self._consumer.commit()
                 logger.debug(
                     "kafka_consumer.dispatched",
                     event_type=event_type,

@@ -38,12 +38,14 @@ Binding examples (consumer side)
 
 from __future__ import annotations
 
+from typing import Any
+
 import structlog
 
 try:
     import aio_pika
 except ImportError:
-    aio_pika = None  # type: ignore[assignment]
+    aio_pika = None
 
 from app.domain.events.base import DomainEvent
 from app.infrastructure.events.broker.base import BrokerEventPublisher
@@ -68,8 +70,8 @@ class RabbitMQEventPublisher(BrokerEventPublisher):
         """Store connection parameters — does NOT open a connection yet."""
         self._url = url
         self._exchange_name = exchange_name
-        self._connection: object | None = None  # aio_pika.RobustConnection
-        self._exchange: object | None = None  # aio_pika.Exchange
+        self._connection: Any | None = None
+        self._exchange: Any | None = None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -84,7 +86,7 @@ class RabbitMQEventPublisher(BrokerEventPublisher):
             )
 
         self._connection = await aio_pika.connect_robust(self._url)
-        channel = await self._connection.channel()  # type: ignore[union-attr]
+        channel = await self._connection.channel()
         self._exchange = await channel.declare_exchange(
             self._exchange_name,
             aio_pika.ExchangeType.TOPIC,
@@ -99,7 +101,7 @@ class RabbitMQEventPublisher(BrokerEventPublisher):
     async def disconnect(self) -> None:
         """Close the connection gracefully."""
         if self._connection is not None:
-            await self._connection.close()  # type: ignore[union-attr]
+            await self._connection.close()
             self._connection = None
             self._exchange = None
             logger.info("rabbitmq.disconnected")
@@ -139,7 +141,7 @@ class RabbitMQEventPublisher(BrokerEventPublisher):
             },
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
         )
-        await self._exchange.publish(  # type: ignore[union-attr]
+        await self._exchange.publish(
             message,
             routing_key=event.event_type,
         )

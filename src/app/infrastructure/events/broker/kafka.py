@@ -38,12 +38,14 @@ Pattern this provides **at-least-once** delivery.
 
 from __future__ import annotations
 
+from typing import Any
+
 import structlog
 
 try:
     from aiokafka import AIOKafkaProducer
 except ImportError:
-    AIOKafkaProducer = None  # type: ignore[assignment, misc]
+    AIOKafkaProducer = None
 
 from app.domain.events.base import DomainEvent
 from app.infrastructure.events.broker.base import BrokerEventPublisher
@@ -76,7 +78,7 @@ class KafkaEventPublisher(BrokerEventPublisher):
         self._bootstrap_servers = bootstrap_servers
         self._topic_prefix = topic_prefix
         self._acks = acks
-        self._producer: object | None = None  # aiokafka.AIOKafkaProducer
+        self._producer: Any | None = None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -96,7 +98,7 @@ class KafkaEventPublisher(BrokerEventPublisher):
             value_serializer=lambda v: v.encode() if isinstance(v, str) else v,
             key_serializer=lambda k: k.encode() if isinstance(k, str) else k,
         )
-        await self._producer.start()  # type: ignore[union-attr]
+        await self._producer.start()
         logger.info(
             "kafka.connected",
             bootstrap_servers=self._bootstrap_servers,
@@ -106,7 +108,7 @@ class KafkaEventPublisher(BrokerEventPublisher):
     async def disconnect(self) -> None:
         """Flush and stop the Kafka producer."""
         if self._producer is not None:
-            await self._producer.stop()  # type: ignore[union-attr]
+            await self._producer.stop()
             self._producer = None
             logger.info("kafka.disconnected")
 
@@ -139,7 +141,7 @@ class KafkaEventPublisher(BrokerEventPublisher):
             ("aggregate_id", str(event.aggregate_id).encode()),
             ("occurred_at", event.occurred_at.isoformat().encode()),
         ]
-        await self._producer.send_and_wait(  # type: ignore[union-attr]
+        await self._producer.send_and_wait(
             topic=topic,
             key=str(event.aggregate_id),
             value=serialize(event),

@@ -57,13 +57,13 @@ class CategorySpecificationTranslator:
             return true()
 
         if isinstance(spec, ActiveCategorySpecification):
-            return CategoryORM.is_deleted == false()  # type: ignore[return-value]
+            return CategoryORM.is_deleted == false()
 
         if isinstance(spec, SlugMatchesSpecification):
-            return CategoryORM.slug == spec.slug  # type: ignore[return-value]
+            return CategoryORM.slug == spec.slug
 
         if isinstance(spec, NameContainsCategorySpecification):
-            return sql_func.lower(CategoryORM.name).contains(spec.keyword)  # type: ignore[return-value]
+            return sql_func.lower(CategoryORM.name).contains(spec.keyword)
 
         if isinstance(spec, AndSpecification):
             return and_(cls.translate(spec.left), cls.translate(spec.right))
