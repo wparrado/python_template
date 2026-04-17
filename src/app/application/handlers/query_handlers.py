@@ -84,9 +84,7 @@ class SearchItemsHandler:
     @staticmethod
     def _build_spec(query: SearchItemsQuery) -> Specification[Item]:
         """Compose a specification from the optional filter parameters."""
-        base: Specification[Item] = (
-            AllItemsSpecification() if query.include_deleted else ActiveItemSpecification()
-        )
+        base: Specification[Item] = AllItemsSpecification() if query.include_deleted else ActiveItemSpecification()
         if query.min_price is not None or query.max_price is not None:
             base = base & PriceInRangeSpecification(query.min_price, query.max_price)
         if query.name_contains is not None:

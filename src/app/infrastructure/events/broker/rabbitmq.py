@@ -80,10 +80,7 @@ class RabbitMQEventPublisher(BrokerEventPublisher):
     async def connect(self) -> None:
         """Open a robust connection and declare the topic exchange."""
         if aio_pika is None:
-            raise ImportError(
-                "aio-pika is required for RabbitMQ support. "
-                "Install it with: uv add aio-pika"
-            )
+            raise ImportError("aio-pika is required for RabbitMQ support. Install it with: uv add aio-pika")
 
         self._connection = await aio_pika.connect_robust(self._url)
         channel = await self._connection.channel()
@@ -122,9 +119,7 @@ class RabbitMQEventPublisher(BrokerEventPublisher):
         Body = UTF-8 JSON via ``serialize()``.
         """
         if self._exchange is None:
-            raise RuntimeError(
-                "RabbitMQEventPublisher is not connected. Call connect() first."
-            )
+            raise RuntimeError("RabbitMQEventPublisher is not connected. Call connect() first.")
 
         if aio_pika is None:
             raise ImportError("aio-pika is required for RabbitMQ support.")

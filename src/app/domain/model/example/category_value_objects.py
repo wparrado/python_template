@@ -51,10 +51,7 @@ class CategorySlug(ValueObject):
         if not self.value:
             raise ValidationError("Category slug must not be empty")
         if not _SLUG_RE.match(self.value):
-            raise ValidationError(
-                "Category slug must be lowercase alphanumeric with hyphens "
-                "(e.g. 'my-category')"
-            )
+            raise ValidationError("Category slug must be lowercase alphanumeric with hyphens (e.g. 'my-category')")
         if len(self.value) > 100:
             raise ValidationError("Category slug must not exceed 100 characters")
 

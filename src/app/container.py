@@ -162,9 +162,7 @@ class Container:
         """
         clock = self._clock
 
-        def _build_item_handlers(
-            uow: IUnitOfWork[Any], repo: Any
-        ) -> ItemHandlers:
+        def _build_item_handlers(uow: IUnitOfWork[Any], repo: Any) -> ItemHandlers:
             return ItemHandlers(
                 create=CreateItemHandler(uow=uow, clock=clock),
                 update=UpdateItemHandler(uow=uow, clock=clock),
@@ -186,9 +184,7 @@ class Container:
                 build_handlers=_build_item_handlers,
                 build_service=lambda h: ItemApplicationService(handlers=h),
                 in_memory_repo=self._persistence.in_memory_item_repo if not self._persistence.is_sqlalchemy else None,
-                in_memory_uow=lambda r: InMemoryUnitOfWork(
-                    repository=r, publisher=self._events.in_process_publisher
-                ),
+                in_memory_uow=lambda r: InMemoryUnitOfWork(repository=r, publisher=self._events.in_process_publisher),
             )
         )
 
@@ -201,9 +197,7 @@ class Container:
         """
         clock = self._clock
 
-        def _build_category_handlers(
-            uow: IUnitOfWork[Any], repo: Any
-        ) -> CategoryHandlers:
+        def _build_category_handlers(uow: IUnitOfWork[Any], repo: Any) -> CategoryHandlers:
             return CategoryHandlers(
                 create=CreateCategoryHandler(uow=uow),
                 update=UpdateCategoryHandler(uow=uow, clock=clock),
@@ -252,9 +246,7 @@ class Container:
         if not self._persistence.is_sqlalchemy:
             assert module.in_memory_repo is not None
             uow = module.in_memory_uow(module.in_memory_repo)
-            singleton: TService = module.build_service(
-                module.build_handlers(uow, module.in_memory_repo)
-            )
+            singleton: TService = module.build_service(module.build_handlers(uow, module.in_memory_repo))
 
             async def _yield_singleton() -> AsyncGenerator[TService, None]:
                 yield singleton

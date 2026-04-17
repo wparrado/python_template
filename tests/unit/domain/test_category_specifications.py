@@ -136,9 +136,5 @@ def test_not_spec_inverts_deleted(deleted_category: Category) -> None:
 
 
 def test_complex_composition(active_category: Category) -> None:
-    spec = (
-        ActiveCategorySpecification()
-        & NameContainsCategorySpecification("elec")
-        & ~SlugMatchesSpecification("nope")
-    )
+    spec = ActiveCategorySpecification() & NameContainsCategorySpecification("elec") & ~SlugMatchesSpecification("nope")
     assert spec.is_satisfied_by(active_category)

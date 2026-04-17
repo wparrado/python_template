@@ -123,9 +123,7 @@ async def test_deleted_item_excluded_from_list(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_search_reflects_updates(client: AsyncClient) -> None:
     """Updated item name must be discoverable via search immediately."""
-    created = (
-        await client.post("/api/v1/items", json={"name": "Old Name", "price": "5.00"})
-    ).json()
+    created = (await client.post("/api/v1/items", json={"name": "Old Name", "price": "5.00"})).json()
 
     await client.put(f"/api/v1/items/{created['id']}", json={"name": "New Name"})
 

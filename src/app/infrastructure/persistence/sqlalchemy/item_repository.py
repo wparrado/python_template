@@ -52,12 +52,7 @@ class SQLAlchemyItemRepository(IItemRepository):
 
     async def find_all(self, limit: int = DEFAULT_PAGE_SIZE, offset: int = 0) -> list[Item]:
         """Return active items paginated by *limit* and *offset*."""
-        stmt = (
-            select(ItemORM)
-            .where(ItemORM.is_deleted == false())
-            .offset(offset)
-            .limit(limit)
-        )
+        stmt = select(ItemORM).where(ItemORM.is_deleted == false()).offset(offset).limit(limit)
         result = await self._session.execute(stmt)
         return [self._to_domain(row) for row in result.scalars().all()]
 

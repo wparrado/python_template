@@ -106,9 +106,7 @@ async def search_items(
     _current_user: Annotated[CurrentUser, Depends(_get_current_user_dep)],
 ) -> PaginatedItemResponse:
     """Search items by optional price range and/or name keyword, with pagination metadata. Requires authentication."""
-    paginated = await service.search_items(
-        ItemSchemaMapper.to_search_params(filters, pagination)
-    )
+    paginated = await service.search_items(ItemSchemaMapper.to_search_params(filters, pagination))
     return ItemSchemaMapper.to_paginated_response(paginated)
 
 

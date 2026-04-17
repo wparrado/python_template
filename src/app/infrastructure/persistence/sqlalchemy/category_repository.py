@@ -50,30 +50,21 @@ class SQLAlchemyCategoryRepository(ICategoryRepository):
 
     async def find_by_id(self, category_id: uuid.UUID) -> Category | None:
         """Return the active category with *category_id*, or ``None`` if not found or soft-deleted."""
-        stmt = select(CategoryORM).where(
-            CategoryORM.id == category_id, CategoryORM.is_deleted == false()
-        )
+        stmt = select(CategoryORM).where(CategoryORM.id == category_id, CategoryORM.is_deleted == false())
         result = await self._session.execute(stmt)
         row = result.scalar_one_or_none()
         return self._to_domain(row) if row is not None else None
 
     async def find_by_slug(self, slug: str) -> Category | None:
         """Return the active category with *slug*, or ``None`` if not found or soft-deleted."""
-        stmt = select(CategoryORM).where(
-            CategoryORM.slug == slug, CategoryORM.is_deleted == false()
-        )
+        stmt = select(CategoryORM).where(CategoryORM.slug == slug, CategoryORM.is_deleted == false())
         result = await self._session.execute(stmt)
         row = result.scalar_one_or_none()
         return self._to_domain(row) if row is not None else None
 
     async def find_all(self, limit: int = DEFAULT_PAGE_SIZE, offset: int = 0) -> list[Category]:
         """Return active categories paginated by *limit* and *offset*."""
-        stmt = (
-            select(CategoryORM)
-            .where(CategoryORM.is_deleted == false())
-            .offset(offset)
-            .limit(limit)
-        )
+        stmt = select(CategoryORM).where(CategoryORM.is_deleted == false()).offset(offset).limit(limit)
         result = await self._session.execute(stmt)
         return [self._to_domain(row) for row in result.scalars().all()]
 
@@ -95,11 +86,7 @@ class SQLAlchemyCategoryRepository(ICategoryRepository):
     async def count(self, spec: Specification[Category] | None = None) -> int:
         """Return total count matching *spec* (SQL WHERE clause), or all active categories."""
         if spec is None:
-            stmt = (
-                select(sql_count())
-                .select_from(CategoryORM)
-                .where(CategoryORM.is_deleted == false())
-            )
+            stmt = select(sql_count()).select_from(CategoryORM).where(CategoryORM.is_deleted == false())
         else:
             clause = CategorySpecificationTranslator.translate(spec)
             stmt = select(sql_count()).select_from(CategoryORM).where(clause)

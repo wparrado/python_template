@@ -35,9 +35,7 @@ valid_category_names = st.text(
 ).filter(lambda s: s.strip() != "")
 
 # Slugs must match ^[a-z0-9]+(?:-[a-z0-9]+)*$
-valid_slugs = st.from_regex(r"[a-z0-9]+(-[a-z0-9]+)*", fullmatch=True).filter(
-    lambda s: len(s) <= 100
-)
+valid_slugs = st.from_regex(r"[a-z0-9]+(-[a-z0-9]+)*", fullmatch=True).filter(lambda s: len(s) <= 100)
 
 invalid_category_names = st.one_of(
     st.just(""),

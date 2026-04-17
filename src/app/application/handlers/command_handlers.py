@@ -100,11 +100,7 @@ class UpdateItemHandler:
                     return Failure(ItemNotFoundError(str(command.item_id)))
                 # Map command sentinel → domain sentinel so the aggregate
                 # knows whether to update the category_id or leave it untouched.
-                cat_id = (
-                    _DOMAIN_UNSET
-                    if command.category_id is CATEGORY_ID_UNSET
-                    else command.category_id
-                )
+                cat_id = _DOMAIN_UNSET if command.category_id is CATEGORY_ID_UNSET else command.category_id
                 item.update(
                     name=command.name,
                     price=command.price,

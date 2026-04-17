@@ -29,9 +29,7 @@ class ICategoryApplicationService(Protocol):
     layer can handle them without importing from the domain directly.
     """
 
-    async def create_category(
-        self, name: str, description: str, slug: str | None
-    ) -> CategoryOutputDTO:
+    async def create_category(self, name: str, description: str, slug: str | None) -> CategoryOutputDTO:
         """Create a new category and return its DTO."""
 
     async def get_category(self, category_id: uuid.UUID) -> CategoryOutputDTO:
@@ -54,9 +52,7 @@ class ICategoryApplicationService(Protocol):
     async def delete_category(self, category_id: uuid.UUID) -> None:
         """Delete a category.  Idempotent: succeeds silently if the category does not exist."""
 
-    async def search_categories(
-        self, params: CategorySearchParams
-    ) -> PaginatedResult[CategoryOutputDTO]:
+    async def search_categories(self, params: CategorySearchParams) -> PaginatedResult[CategoryOutputDTO]:
         """Search categories using optional name and slug filters.
 
         *params* groups all filter and pagination fields.  Omit any field to

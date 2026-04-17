@@ -115,6 +115,7 @@ def test_get_category_returns_200(client: TestClient) -> None:
 
 def test_get_category_not_found_returns_404(client: TestClient) -> None:
     import uuid
+
     response = client.get(f"/api/v1/categories/{uuid.uuid4()}")
     assert response.status_code == 404
 
@@ -186,6 +187,7 @@ def test_update_category_preserves_unchanged_fields(client: TestClient) -> None:
 
 def test_update_category_not_found_returns_404(client: TestClient) -> None:
     import uuid
+
     response = client.put(
         f"/api/v1/categories/{uuid.uuid4()}",
         json={"name": "Ghost"},
@@ -206,6 +208,7 @@ def test_delete_category_returns_204(client: TestClient) -> None:
 
 def test_delete_category_idempotent(client: TestClient) -> None:
     import uuid
+
     response = client.delete(f"/api/v1/categories/{uuid.uuid4()}")
     assert response.status_code == 204
 

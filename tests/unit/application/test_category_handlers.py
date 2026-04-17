@@ -54,9 +54,7 @@ def publisher() -> InProcessEventPublisher:
 
 
 @pytest.fixture
-def uow(
-    repository: InMemoryCategoryRepository, publisher: InProcessEventPublisher
-) -> InMemoryCategoryUnitOfWork:
+def uow(repository: InMemoryCategoryRepository, publisher: InProcessEventPublisher) -> InMemoryCategoryUnitOfWork:
     return InMemoryCategoryUnitOfWork(repository=repository, publisher=publisher)
 
 
@@ -137,9 +135,7 @@ async def test_delete_nonexistent_is_idempotent(uow: InMemoryCategoryUnitOfWork)
 
 
 @pytest.mark.asyncio
-async def test_delete_existing_category(
-    uow: InMemoryCategoryUnitOfWork, publisher: InProcessEventPublisher
-) -> None:
+async def test_delete_existing_category(uow: InMemoryCategoryUnitOfWork, publisher: InProcessEventPublisher) -> None:
     create_handler = CreateCategoryHandler(uow=uow)
     created = await create_handler.handle(CreateCategoryCommand(name="ToDelete"))
     assert isinstance(created, Success)
@@ -254,9 +250,7 @@ async def test_search_categories_combined_filters(uow: InMemoryCategoryUnitOfWor
     await create_handler.handle(CreateCategoryCommand(name="Blue Books"))
 
     search_handler = SearchCategoriesHandler(repository=uow.repository)
-    result = await search_handler.handle(
-        SearchCategoriesQuery(name_contains="blue", slug="blue-electronics")
-    )
+    result = await search_handler.handle(SearchCategoriesQuery(name_contains="blue", slug="blue-electronics"))
     assert isinstance(result, Success)
     assert len(result.value.items) == 1
     assert result.value.items[0].name == "Blue Electronics"

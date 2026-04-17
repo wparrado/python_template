@@ -78,9 +78,7 @@ async def create_category(
     _current_user: Annotated[CurrentUser, Depends(_get_current_user_dep)],
 ) -> CategoryResponse:
     """Create a new category. Requires authentication."""
-    dto = await service.create_category(
-        name=body.name, description=body.description, slug=body.slug
-    )
+    dto = await service.create_category(name=body.name, description=body.description, slug=body.slug)
     return CategorySchemaMapper.to_response(dto)
 
 
@@ -103,9 +101,7 @@ async def search_categories(
     _current_user: Annotated[CurrentUser, Depends(_get_current_user_dep)],
 ) -> PaginatedCategoryResponse:
     """Search categories by optional name keyword and/or slug, with pagination metadata. Requires authentication."""
-    paginated = await service.search_categories(
-        CategorySchemaMapper.to_search_params(filters, pagination)
-    )
+    paginated = await service.search_categories(CategorySchemaMapper.to_search_params(filters, pagination))
     return CategorySchemaMapper.to_paginated_response(paginated)
 
 

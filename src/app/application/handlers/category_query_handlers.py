@@ -50,9 +50,7 @@ class ListCategoriesHandler:
     def __init__(self, repository: ICategoryRepository) -> None:
         self._repository = repository
 
-    async def handle(
-        self, query: ListCategoriesQuery
-    ) -> Result[PaginatedResult[CategoryOutputDTO], DomainError]:
+    async def handle(self, query: ListCategoriesQuery) -> Result[PaginatedResult[CategoryOutputDTO], DomainError]:
         """Execute the query and return paginated categories with metadata."""
         categories = await self._repository.find_all(limit=query.limit, offset=query.offset)
         total = await self._repository.count()
@@ -72,9 +70,7 @@ class SearchCategoriesHandler:
     def __init__(self, repository: ICategoryRepository) -> None:
         self._repository = repository
 
-    async def handle(
-        self, query: SearchCategoriesQuery
-    ) -> Result[PaginatedResult[CategoryOutputDTO], DomainError]:
+    async def handle(self, query: SearchCategoriesQuery) -> Result[PaginatedResult[CategoryOutputDTO], DomainError]:
         """Build a composite specification from query params and delegate to the repository."""
         spec = self._build_spec(query)
         all_matching = await self._repository.find_matching(spec)

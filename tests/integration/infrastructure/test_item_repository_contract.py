@@ -109,9 +109,7 @@ async def test_find_matching_by_price_range(repository: IItemRepository) -> None
     await repository.save(cheap)
     await repository.save(expensive)
 
-    results = await repository.find_matching(
-        PriceInRangeSpecification(min_price=Decimal("1"), max_price=Decimal("10"))
-    )
+    results = await repository.find_matching(PriceInRangeSpecification(min_price=Decimal("1"), max_price=Decimal("10")))
 
     assert len(results) == 1
     assert results[0].id == cheap.id

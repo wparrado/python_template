@@ -113,9 +113,7 @@ async def test_deleted_category_excluded_from_list(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_search_reflects_updates(client: AsyncClient) -> None:
     """Updated category name must be discoverable via search immediately."""
-    created = (
-        await client.post("/api/v1/categories", json={"name": "Old Name", "slug": "old-name"})
-    ).json()
+    created = (await client.post("/api/v1/categories", json={"name": "Old Name", "slug": "old-name"})).json()
 
     await client.put(f"/api/v1/categories/{created['id']}", json={"name": "New Name"})
 

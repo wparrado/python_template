@@ -95,16 +95,12 @@ class RabbitMQEventConsumer(BrokerEventConsumer):
 
         self._connection = await aio_pika.connect_robust(self._url)
         channel = await self._connection.channel()
-        exchange = await channel.declare_exchange(
-            self._exchange, aio_pika.ExchangeType.TOPIC, durable=True
-        )
+        exchange = await channel.declare_exchange(self._exchange, aio_pika.ExchangeType.TOPIC, durable=True)
         queue = await channel.declare_queue(self._queue, durable=True)
         for key in self._routing_keys:
             await queue.bind(exchange, routing_key=key)
 
-        self._task = asyncio.create_task(
-            self._consume(queue), name=f"consumer.{self._queue}"
-        )
+        self._task = asyncio.create_task(self._consume(queue), name=f"consumer.{self._queue}")
         logger.info(
             "rabbitmq_consumer.started",
             queue=self._queue,

@@ -68,9 +68,7 @@ class CategoryApplicationService(ICategoryApplicationService):
         """Wire the service with its grouped command and query handlers."""
         self._handlers = handlers
 
-    async def create_category(
-        self, name: str, description: str, slug: str | None
-    ) -> CategoryOutputDTO:
+    async def create_category(self, name: str, description: str, slug: str | None) -> CategoryOutputDTO:
         """Create a new category and return its DTO."""
         result = await self._handlers.create.handle(
             CreateCategoryCommand(name=name, description=description, slug=slug)
@@ -90,9 +88,7 @@ class CategoryApplicationService(ICategoryApplicationService):
         self, limit: int = DEFAULT_PAGE_SIZE, offset: int = 0
     ) -> PaginatedResult[CategoryOutputDTO]:
         """Return paginated DTOs with total count and navigation metadata."""
-        result = await self._handlers.list_all.handle(
-            ListCategoriesQuery(limit=limit, offset=offset)
-        )
+        result = await self._handlers.list_all.handle(ListCategoriesQuery(limit=limit, offset=offset))
         if isinstance(result, Failure):
             raise result.error
         return result.value
@@ -106,9 +102,7 @@ class CategoryApplicationService(ICategoryApplicationService):
     ) -> CategoryOutputDTO:
         """Update category fields and return the updated DTO.  Raises CategoryNotFoundError if absent."""
         result = await self._handlers.update.handle(
-            UpdateCategoryCommand(
-                category_id=category_id, name=name, description=description, slug=slug
-            )
+            UpdateCategoryCommand(category_id=category_id, name=name, description=description, slug=slug)
         )
         if isinstance(result, Failure):
             raise result.error
@@ -116,15 +110,11 @@ class CategoryApplicationService(ICategoryApplicationService):
 
     async def delete_category(self, category_id: uuid.UUID) -> None:
         """Delete a category.  Idempotent: succeeds silently if the category does not exist."""
-        result = await self._handlers.delete.handle(
-            DeleteCategoryCommand(category_id=category_id)
-        )
+        result = await self._handlers.delete.handle(DeleteCategoryCommand(category_id=category_id))
         if isinstance(result, Failure):
             raise result.error
 
-    async def search_categories(
-        self, params: CategorySearchParams
-    ) -> PaginatedResult[CategoryOutputDTO]:
+    async def search_categories(self, params: CategorySearchParams) -> PaginatedResult[CategoryOutputDTO]:
         """Search categories with filter and pagination metadata."""
         result = await self._handlers.search.handle(
             SearchCategoriesQuery(

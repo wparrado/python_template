@@ -19,6 +19,13 @@ repos:
         stages: [pre-commit]
         pass_filenames: false
 
+      - id: ruff-format
+        name: ruff — auto-format code
+        language: system
+        entry: bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv run ruff format src/ tests/'
+        stages: [pre-commit]
+        pass_filenames: false
+
       - id: tach-check
         name: tach — module boundary enforcement
         language: system

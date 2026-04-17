@@ -87,10 +87,7 @@ class KafkaEventPublisher(BrokerEventPublisher):
     async def connect(self) -> None:
         """Create and start the Kafka producer."""
         if AIOKafkaProducer is None:
-            raise ImportError(
-                "aiokafka is required for Kafka support. "
-                "Install it with: uv add aiokafka"
-            )
+            raise ImportError("aiokafka is required for Kafka support. Install it with: uv add aiokafka")
 
         self._producer = AIOKafkaProducer(
             bootstrap_servers=self._bootstrap_servers,
@@ -130,9 +127,7 @@ class KafkaEventPublisher(BrokerEventPublisher):
         Headers = [(name, bytes), …] with event metadata
         """
         if self._producer is None:
-            raise RuntimeError(
-                "KafkaEventPublisher is not connected. Call connect() first."
-            )
+            raise RuntimeError("KafkaEventPublisher is not connected. Call connect() first.")
 
         topic = f"{self._topic_prefix}.{event.event_type}"
         headers = [

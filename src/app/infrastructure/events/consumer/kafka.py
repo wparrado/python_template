@@ -101,9 +101,7 @@ class KafkaEventConsumer(BrokerEventConsumer):
             value_deserializer=lambda v: v.decode(),
         )
         await self._consumer.start()
-        self._task = asyncio.create_task(
-            self._poll(), name=f"consumer.kafka.{self._group_id}"
-        )
+        self._task = asyncio.create_task(self._poll(), name=f"consumer.kafka.{self._group_id}")
         logger.info(
             "kafka_consumer.started",
             topics=self._topics,
