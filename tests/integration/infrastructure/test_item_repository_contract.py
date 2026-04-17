@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import uuid
 from decimal import Decimal
+from typing import AsyncGenerator
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.domain.model.example.item import Item
 from app.domain.ports.outbound.item_repository import IItemRepository
@@ -19,14 +21,30 @@ from app.domain.specifications.item_specifications import (
     PriceInRangeSpecification,
 )
 from app.infrastructure.persistence.in_memory.item_repository import InMemoryItemRepository
+from app.infrastructure.persistence.sqlalchemy.item_repository import SQLAlchemyItemRepository
+from app.infrastructure.persistence.sqlalchemy.models import Base
 
 
-@pytest.fixture(params=["in_memory"])
-def repository(request: pytest.FixtureRequest) -> IItemRepository:
+@pytest.fixture(params=["in_memory", "sqlalchemy"])
+async def repository(request: pytest.FixtureRequest) -> AsyncGenerator[IItemRepository, None]:
     """Parametrized fixture: add new adapters here to run the full contract."""
     if request.param == "in_memory":
-        return InMemoryItemRepository()
-    raise ValueError(f"Unknown repository: {request.param}")
+        yield InMemoryItemRepository()
+    elif request.param == "sqlalchemy":
+        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        factory: async_sessionmaker[AsyncSession] = async_sessionmaker(engine, expire_on_commit=False)
+        session = factory()
+        try:
+            yield SQLAlchemyItemRepository(session)
+        finally:
+            await session.close()
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.drop_all)
+            await engine.dispose()
+    else:
+        raise ValueError(f"Unknown repository: {request.param}")
 
 
 @pytest.mark.asyncio
@@ -36,7 +54,7 @@ async def test_save_and_find_by_id(repository: IItemRepository) -> None:
     found = await repository.find_by_id(item.id)
     assert found is not None
     assert found.id == item.id
-    assert found.name == "Widget"
+    assert found.name.value == "Widget"
 
 
 @pytest.mark.asyncio

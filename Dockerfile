@@ -6,8 +6,8 @@ WORKDIR /app
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy only dependency manifests first (layer caching)
-COPY pyproject.toml ./
+# Copy dependency manifests first (layer caching — uv.lock pins exact versions)
+COPY pyproject.toml uv.lock ./
 COPY src/ ./src/
 
 # Install runtime dependencies only (no dev tools)

@@ -32,5 +32,13 @@ class ItemNotFoundError(NotFoundError):
         self.item_id = item_id
 
 
+class CategoryNotFoundError(NotFoundError):
+    """Raised when a specific category cannot be found by ID."""
+
+    def __init__(self, category_id: str) -> None:
+        super().__init__(f"Category '{category_id}' not found")
+        self.category_id = category_id
+
+
 class ConflictError(DomainError):
     """Raised when an operation conflicts with existing state."""

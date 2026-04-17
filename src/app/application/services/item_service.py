@@ -23,6 +23,7 @@ from app.application.commands.item_commands import (
     UpdateItemCommand,
 )
 from app.application.dtos.item_dtos import ItemOutputDTO, ItemSearchParams
+from app.application.dtos.pagination import PaginatedResult
 from app.application.handlers.command_handlers import (
     CreateItemHandler,
     DeleteItemHandler,
@@ -30,9 +31,9 @@ from app.application.handlers.command_handlers import (
 )
 from app.application.handlers.query_handlers import GetItemHandler, ListItemsHandler, SearchItemsHandler
 from app.application.queries.item_queries import GetItemQuery, ListItemsQuery, SearchItemsQuery
+from app.application.constants import DEFAULT_PAGE_SIZE
+from app.application.ports.item_application_service import IItemApplicationService
 from app.application.result import Failure
-
-_DEFAULT_LIMIT = 50
 
 
 @dataclass
@@ -47,7 +48,7 @@ class ItemHandlers:
     search: SearchItemsHandler
 
 
-class ItemApplicationService:
+class ItemApplicationService(IItemApplicationService):
     """Implements IItemApplicationService by coordinating command/query handlers.
 
     Each method delegates to the appropriate handler, unwraps the
@@ -60,10 +61,10 @@ class ItemApplicationService:
         """Wire the service with its grouped command and query handlers."""
         self._handlers = handlers
 
-    async def create_item(self, name: str, price: Decimal, description: str) -> ItemOutputDTO:
+    async def create_item(self, name: str, price: Decimal, description: str, category_id: uuid.UUID | None = None) -> ItemOutputDTO:
         """Create a new item and return its DTO."""
         result = await self._handlers.create.handle(
-            CreateItemCommand(name=name, price=price, description=description)
+            CreateItemCommand(name=name, price=price, description=description, category_id=category_id)
         )
         if isinstance(result, Failure):
             raise result.error
@@ -76,8 +77,8 @@ class ItemApplicationService:
             raise result.error
         return result.value
 
-    async def list_items(self, limit: int = _DEFAULT_LIMIT, offset: int = 0) -> list[ItemOutputDTO]:
-        """Return paginated DTOs for items."""
+    async def list_items(self, limit: int = DEFAULT_PAGE_SIZE, offset: int = 0) -> PaginatedResult[ItemOutputDTO]:
+        """Return paginated DTOs with total count and navigation metadata."""
         result = await self._handlers.list_all.handle(ListItemsQuery(limit=limit, offset=offset))
         if isinstance(result, Failure):
             raise result.error
@@ -89,10 +90,11 @@ class ItemApplicationService:
         name: str | None,
         price: Decimal | None,
         description: str | None,
+        category_id: uuid.UUID | None = None,
     ) -> ItemOutputDTO:
         """Update item fields and return the updated DTO.  Raises ItemNotFoundError if absent."""
         result = await self._handlers.update.handle(
-            UpdateItemCommand(item_id=item_id, name=name, price=price, description=description)
+            UpdateItemCommand(item_id=item_id, name=name, price=price, description=description, category_id=category_id)
         )
         if isinstance(result, Failure):
             raise result.error
@@ -104,8 +106,8 @@ class ItemApplicationService:
         if isinstance(result, Failure):
             raise result.error
 
-    async def search_items(self, params: ItemSearchParams) -> list[ItemOutputDTO]:
-        """Search items using the filter and pagination settings in *params*."""
+    async def search_items(self, params: ItemSearchParams) -> PaginatedResult[ItemOutputDTO]:
+        """Search items with filter and pagination metadata."""
         result = await self._handlers.search.handle(
             SearchItemsQuery(
                 min_price=params.min_price,

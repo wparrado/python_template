@@ -1,0 +1,119 @@
+name: Security — Dependency & Container Scan
+
+on:
+  # Weekly scan every Monday at 08:00 UTC
+  schedule:
+    - cron: "0 8 * * 1"
+  push:
+    branches: [main]
+  # Allow on-demand scans via the GitHub UI
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write  # Required to upload SARIF results
+  issues: write           # Required to open issues on vulnerability findings
+
+jobs:
+  # ── 1. pip-audit: Python dependency vulnerability audit ───────────────────
+  pip-audit:
+    name: Audit Python Dependencies (pip-audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      # Export pinned production deps and audit them without installing pip-audit
+      # into the project venv — uvx runs it in an isolated ephemeral environment.
+      - name: Run pip-audit
+        id: audit
+        run: |
+          uvx pip-audit --requirement <(uv export --no-dev --format requirements-txt)
+        continue-on-error: true
+
+      # If the audit found vulnerabilities, open (or update) a GitHub issue so
+      # the team is notified even outside of PR/push contexts (e.g. scheduled runs).
+      - name: Create issue on vulnerability findings
+        if: steps.audit.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🔒 Security: pip-audit found vulnerable dependencies';
+            const body = [
+              '## pip-audit Vulnerability Report',
+              '',
+              `**Triggered by**: \`${{ github.event_name }}\``,
+              `**Ref**: \`${{ github.ref }}\``,
+              `**Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              '',
+              'One or more production dependencies have known CVEs.',
+              'Please review the workflow logs and update affected packages.',
+            ].join('\n');
+
+            // Reuse an existing open issue rather than creating duplicates
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['security'],
+            });
+
+            const duplicate = existing.data.find(i => i.title === title);
+            if (duplicate) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: duplicate.number,
+                body: `New scan triggered at ${new Date().toISOString()} — vulnerabilities still present.\nSee run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['security'],
+              });
+            }
+
+      - name: Fail if vulnerabilities found
+        if: steps.audit.outcome == 'failure'
+        run: exit 1
+
+  # ── 2. trivy-scan: Container image CVE scan ───────────────────────────────
+  trivy-scan:
+    name: Scan Docker Image (Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build the image locally — no push needed for scanning
+      - name: Build Docker image for scanning
+        run: docker build -t app:scan .
+
+      # Trivy scans the image and outputs SARIF for GitHub Security tab
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: app:scan
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "1"         # Fail the job if CRITICAL/HIGH CVEs are found
+          ignore-unfixed: true   # Skip CVEs with no available fix
+
+      # Upload SARIF so results appear in the repository Security > Code scanning tab
+      - name: Upload Trivy SARIF to GitHub Security
+        if: always()  # Upload even when the scan step fails
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif

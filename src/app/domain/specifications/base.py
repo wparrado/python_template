@@ -34,44 +34,69 @@ class Specification(ABC, Generic[T]):
 
     def __and__(self, other: Specification[T]) -> Specification[T]:
         """Return a specification satisfied when *both* operands are satisfied."""
-        return _AndSpecification(self, other)
+        return AndSpecification(self, other)
 
     def __or__(self, other: Specification[T]) -> Specification[T]:
         """Return a specification satisfied when *either* operand is satisfied."""
-        return _OrSpecification(self, other)
+        return OrSpecification(self, other)
 
     def __invert__(self) -> Specification[T]:
         """Return the logical negation of this specification."""
-        return _NotSpecification(self)
+        return NotSpecification(self)
 
 
-class _AndSpecification(Specification[T]):
+class AndSpecification(Specification[T]):
     """Composite: satisfied when both inner specifications are satisfied."""
 
     def __init__(self, left: Specification[T], right: Specification[T]) -> None:
         self._left = left
         self._right = right
 
+    @property
+    def left(self) -> Specification[T]:
+        """Left operand of the AND composition."""
+        return self._left
+
+    @property
+    def right(self) -> Specification[T]:
+        """Right operand of the AND composition."""
+        return self._right
+
     def is_satisfied_by(self, candidate: T) -> bool:
         return self._left.is_satisfied_by(candidate) and self._right.is_satisfied_by(candidate)
 
 
-class _OrSpecification(Specification[T]):
+class OrSpecification(Specification[T]):
     """Composite: satisfied when at least one inner specification is satisfied."""
 
     def __init__(self, left: Specification[T], right: Specification[T]) -> None:
         self._left = left
         self._right = right
 
+    @property
+    def left(self) -> Specification[T]:
+        """Left operand of the OR composition."""
+        return self._left
+
+    @property
+    def right(self) -> Specification[T]:
+        """Right operand of the OR composition."""
+        return self._right
+
     def is_satisfied_by(self, candidate: T) -> bool:
         return self._left.is_satisfied_by(candidate) or self._right.is_satisfied_by(candidate)
 
 
-class _NotSpecification(Specification[T]):
+class NotSpecification(Specification[T]):
     """Composite: satisfied when the inner specification is *not* satisfied."""
 
     def __init__(self, spec: Specification[T]) -> None:
         self._spec = spec
+
+    @property
+    def spec(self) -> Specification[T]:
+        """The inner specification being negated."""
+        return self._spec
 
     def is_satisfied_by(self, candidate: T) -> bool:
         return not self._spec.is_satisfied_by(candidate)

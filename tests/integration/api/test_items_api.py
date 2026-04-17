@@ -64,7 +64,11 @@ def test_create_item_missing_fields_returns_422(client: TestClient) -> None:
 def test_list_items_empty_returns_200(client: TestClient) -> None:
     response = client.get("/api/v1/items")
     assert response.status_code == 200
-    assert response.json() == []
+    data = response.json()
+    assert data["items"] == []
+    assert data["total"] == 0
+    assert data["has_next"] is False
+    assert data["has_previous"] is False
 
 
 def test_list_items_pagination(client: TestClient) -> None:
@@ -72,7 +76,11 @@ def test_list_items_pagination(client: TestClient) -> None:
         client.post("/api/v1/items", json={"name": f"Item {i}", "price": "1.00"})
     response = client.get("/api/v1/items?limit=2&offset=1")
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    data = response.json()
+    assert len(data["items"]) == 2
+    assert data["total"] == 5
+    assert data["has_next"] is True
+    assert data["has_previous"] is True
 
 
 def test_list_items_returns_created_items(client: TestClient) -> None:
@@ -80,7 +88,9 @@ def test_list_items_returns_created_items(client: TestClient) -> None:
     client.post("/api/v1/items", json={"name": "B", "price": "2.00"})
     response = client.get("/api/v1/items")
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    data = response.json()
+    assert len(data["items"]) == 2
+    assert data["total"] == 2
 
 
 # ---------------------------------------------------------------------------
@@ -157,6 +167,16 @@ def test_health_returns_200(client: TestClient) -> None:
     assert response.json()["status"] == "ok"
 
 
+def test_health_ready_returns_200_and_checks(client: TestClient) -> None:
+    response = client.get("/health/ready")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ready"
+    assert "checks" in data
+    assert "in_memory_repository" in data["checks"]
+    assert data["checks"]["in_memory_repository"] == "ok"
+
+
 # ---------------------------------------------------------------------------
 # GET /api/v1/items/search
 # ---------------------------------------------------------------------------
@@ -167,7 +187,7 @@ def test_search_items_no_filters_returns_all_active(client: TestClient) -> None:
     client.post("/api/v1/items", json={"name": "Beta", "price": "2.00"})
     response = client.get("/api/v1/items/search")
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    assert len(response.json()["items"]) == 2
 
 
 def test_search_items_by_name(client: TestClient) -> None:
@@ -175,7 +195,7 @@ def test_search_items_by_name(client: TestClient) -> None:
     client.post("/api/v1/items", json={"name": "Gadget", "price": "10.00"})
     response = client.get("/api/v1/items/search?name_contains=widget")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) == 1
     assert data[0]["name"] == "Super Widget"
 
@@ -185,7 +205,7 @@ def test_search_items_by_price_range(client: TestClient) -> None:
     client.post("/api/v1/items", json={"name": "Expensive", "price": "99.99"})
     response = client.get("/api/v1/items/search?max_price=10")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) == 1
     assert data[0]["name"] == "Cheap"
 
@@ -196,7 +216,7 @@ def test_search_items_combined_filters(client: TestClient) -> None:
     client.post("/api/v1/items", json={"name": "Blue Widget", "price": "500.00"})
     response = client.get("/api/v1/items/search?name_contains=blue&max_price=10")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) == 1
     assert data[0]["price"] == 5.0
 
@@ -205,7 +225,9 @@ def test_search_items_no_match_returns_empty(client: TestClient) -> None:
     client.post("/api/v1/items", json={"name": "Widget", "price": "9.99"})
     response = client.get("/api/v1/items/search?name_contains=nonexistent")
     assert response.status_code == 200
-    assert response.json() == []
+    data = response.json()
+    assert data["items"] == []
+    assert data["total"] == 0
 
 
 def test_search_items_pagination(client: TestClient) -> None:
@@ -213,4 +235,6 @@ def test_search_items_pagination(client: TestClient) -> None:
         client.post("/api/v1/items", json={"name": f"Item {i}", "price": "1.00"})
     response = client.get("/api/v1/items/search?limit=2&offset=1")
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    data = response.json()
+    assert len(data["items"]) == 2
+    assert data["total"] == 5

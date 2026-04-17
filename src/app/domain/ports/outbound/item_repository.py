@@ -9,10 +9,9 @@ from __future__ import annotations
 import uuid
 from abc import ABC, abstractmethod
 
+from app.domain.constants import DEFAULT_PAGE_SIZE
 from app.domain.model.example.item import Item
 from app.domain.specifications.base import Specification
-
-_DEFAULT_LIMIT = 50
 
 
 class IItemRepository(ABC):
@@ -27,7 +26,7 @@ class IItemRepository(ABC):
         """Return the item with the given id, or None if not found."""
 
     @abstractmethod
-    async def find_all(self, limit: int = _DEFAULT_LIMIT, offset: int = 0) -> list[Item]:
+    async def find_all(self, limit: int = DEFAULT_PAGE_SIZE, offset: int = 0) -> list[Item]:
         """Return items paginated by limit and offset."""
 
     @abstractmethod
@@ -37,3 +36,7 @@ class IItemRepository(ABC):
     @abstractmethod
     async def delete(self, item_id: uuid.UUID) -> None:
         """Delete the item with the given id (no-op if not found)."""
+
+    @abstractmethod
+    async def count(self, spec: Specification[Item] | None = None) -> int:
+        """Return the total number of items matching *spec*, or all items if spec is None."""

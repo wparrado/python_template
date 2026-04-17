@@ -5,6 +5,7 @@ by reading OIDC_ISSUER and OIDC_AUDIENCE from the environment.
 
 Flow:
   1. On startup: fetch JWKS from {OIDC_ISSUER}/.well-known/jwks.json
+     The outbound HTTP call is protected by a circuit breaker.
   2. Per-request: decode and verify the Bearer JWT using the cached JWKS
   3. Return CurrentUser or raise HTTPException(401)
 """
@@ -16,11 +17,13 @@ from collections.abc import Callable, Coroutine
 from typing import Any
 
 import httpx
+import pybreaker
 from authlib.jose import JsonWebKey, JsonWebToken, JWTClaims
 from authlib.jose.errors import JoseError
 from fastapi import HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.domain.ports.outbound.circuit_breaker import ICircuitBreaker
 from app.infrastructure.auth.models import CurrentUser
 from app.settings import Settings
 
@@ -34,12 +37,14 @@ class OidcVerifier:
 
     Provider-agnostic: only OIDC_ISSUER and OIDC_AUDIENCE are required.
     Compatible with any standards-compliant OIDC provider.
+    An optional ICircuitBreaker guards the outbound JWKS HTTP call.
     """
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, circuit_breaker: ICircuitBreaker | None = None) -> None:
         self._settings = settings
         self._jwks: dict[str, object] | None = None
         self._jwt = JsonWebToken(settings.oidc_algorithms)
+        self._circuit_breaker = circuit_breaker
 
     @property
     def oidc_issuer(self) -> str:
@@ -52,11 +57,32 @@ class OidcVerifier:
             logger.warning("OIDC_ISSUER not configured — auth is disabled")
             return
         jwks_url = f"{self._settings.oidc_issuer.rstrip('/')}/.well-known/jwks.json"
+        try:
+            self._jwks = await self._fetch_jwks(jwks_url)
+        except pybreaker.CircuitBreakerError as exc:
+            logger.error("Circuit breaker OPEN — cannot fetch JWKS from %s: %s", jwks_url, exc)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Auth service unavailable (circuit open)",
+            ) from exc
+        logger.info("JWKS loaded from %s", jwks_url)
+
+    async def _fetch_jwks(self, jwks_url: str) -> dict[str, object]:
+        """Fetch JWKS, optionally through the circuit breaker."""
+
+        def _sync_fetch() -> dict[str, object]:
+            with httpx.Client() as client:
+                response = client.get(jwks_url, timeout=10)
+                response.raise_for_status()
+                return response.json()  # type: ignore[no-any-return]
+
+        if self._circuit_breaker is not None:
+            return self._circuit_breaker.call(_sync_fetch)  # type: ignore[no-any-return]
+
         async with httpx.AsyncClient() as client:
             response = await client.get(jwks_url, timeout=10)
             response.raise_for_status()
-            self._jwks = response.json()
-        logger.info("JWKS loaded from %s", jwks_url)
+            return response.json()  # type: ignore[no-any-return]
 
     def verify_token(self, token: str) -> CurrentUser:
         """Decode and verify a JWT.  Returns CurrentUser or raises HTTPException(401)."""

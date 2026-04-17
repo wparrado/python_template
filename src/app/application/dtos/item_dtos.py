@@ -59,5 +59,6 @@ class ItemOutputDTO(BaseModel):
     name: str
     price: Decimal
     description: str
+    category_id: uuid.UUID | None
     created_at: datetime
     updated_at: datetime

@@ -40,10 +40,20 @@ class PriceInRangeSpecification(Specification[Item]):
         self._min = min_price
         self._max = max_price
 
+    @property
+    def min_price(self) -> Decimal | None:
+        """Lower bound of the price range, inclusive. ``None`` means unbounded."""
+        return self._min
+
+    @property
+    def max_price(self) -> Decimal | None:
+        """Upper bound of the price range, inclusive. ``None`` means unbounded."""
+        return self._max
+
     def is_satisfied_by(self, candidate: Item) -> bool:
-        if self._min is not None and candidate.price < self._min:
+        if self._min is not None and candidate.price.amount < self._min:
             return False
-        if self._max is not None and candidate.price > self._max:
+        if self._max is not None and candidate.price.amount > self._max:
             return False
         return True
 
@@ -54,5 +64,10 @@ class NameContainsSpecification(Specification[Item]):
     def __init__(self, keyword: str) -> None:
         self._keyword = keyword.lower()
 
+    @property
+    def keyword(self) -> str:
+        """Normalised (lowercased) keyword to search for within item names."""
+        return self._keyword
+
     def is_satisfied_by(self, candidate: Item) -> bool:
-        return self._keyword in candidate.name.lower()
+        return self._keyword in candidate.name.value.lower()

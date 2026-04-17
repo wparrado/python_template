@@ -17,9 +17,10 @@ class ItemMapper:
         """Convert an Item aggregate to an ItemOutputDTO."""
         return ItemOutputDTO(
             id=item.id,
-            name=item.name,
-            price=item.price,
-            description=item.description,
+            name=item.name.value,
+            price=item.price.amount,
+            description=item.description.value,
+            category_id=item.category_id.value if item.category_id is not None else None,
             created_at=item.created_at,
             updated_at=item.updated_at,
         )

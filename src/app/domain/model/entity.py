@@ -9,6 +9,10 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.domain.ports.inbound.clock import IClock
 
 
 @dataclass
@@ -34,6 +38,6 @@ class Entity:
     def __hash__(self) -> int:
         return hash(self.id)
 
-    def _touch(self) -> None:
-        """Update the updated_at timestamp."""
-        self.updated_at = datetime.now(UTC)
+    def _touch(self, clock: IClock) -> None:
+        """Update the updated_at timestamp using the injected clock."""
+        self.updated_at = clock.now()

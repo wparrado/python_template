@@ -1,0 +1,146 @@
+name: CI — Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancel in-progress runs for the same PR/branch to avoid wasted compute
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ── 1. Ruff: format check + lint ──────────────────────────────────────────
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Check formatting
+        run: uv run ruff format --check src/ tests/
+
+      - name: Lint
+        run: uv run ruff check src/ tests/
+
+  # ── 2. Mypy: strict type checking ─────────────────────────────────────────
+  type-check:
+    name: Type Check (mypy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run mypy (strict)
+        run: MYPYPATH=src uv run mypy --explicit-package-bases $(find src/app -name "*.py" | tr "\n" " ")
+
+  # ── 3. Pylint: score must be 10/10 ────────────────────────────────────────
+  quality:
+    name: Quality (pylint 10/10)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: type-check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run pylint
+        run: PYTHONPATH=src uv run pylint src/app --fail-under=10
+
+  # ── 4. Architecture: tach + import-linter + pytest-archon ─────────────────
+  architecture:
+    name: Architecture (tach + import-linter + archon)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: quality
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Check module boundaries (tach)
+        run: uv run tach check
+
+      - name: Check import rules (import-linter)
+        run: uv run lint-imports
+
+      - name: Run architecture tests (pytest-archon)
+        run: uv run pytest tests/architecture/ -x -q
+
+  # ── 5. Tests: unit + integration, matrix 3.12 & 3.13 ─────────────────────
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: architecture
+
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    # Environment variables required by the test suite
+    env:
+      APP_NAME: test
+      DEBUG: "false"
+      OIDC_ISSUER: ""
+      OTEL_ENABLED: "false"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv (Python ${{ matrix.python-version }})
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run tests
+        run: uv run pytest tests/ -x -q --ignore=tests/architecture

@@ -10,6 +10,7 @@ Imports only from app.domain and app.application.
 from __future__ import annotations
 
 from app.application.dtos.item_dtos import ItemOutputDTO
+from app.application.dtos.pagination import PaginatedResult
 from app.application.mappers.item_mapper import ItemMapper
 from app.application.queries.item_queries import GetItemQuery, ListItemsQuery, SearchItemsQuery
 from app.application.result import Failure, Result, Success
@@ -40,15 +41,23 @@ class GetItemHandler:
 
 
 class ListItemsHandler:
-    """Handles ListItemsQuery — returns a paginated list of items."""
+    """Handles ListItemsQuery — returns a paginated list of items with total count."""
 
     def __init__(self, repository: IItemRepository) -> None:
         self._repository = repository
 
-    async def handle(self, query: ListItemsQuery) -> Result[list[ItemOutputDTO], DomainError]:
-        """Execute the query and return paginated items."""
+    async def handle(self, query: ListItemsQuery) -> Result[PaginatedResult[ItemOutputDTO], DomainError]:
+        """Execute the query and return paginated items with metadata."""
         items = await self._repository.find_all(limit=query.limit, offset=query.offset)
-        return Success(ItemMapper.to_output_dto_list(items))
+        total = await self._repository.count()
+        return Success(
+            PaginatedResult(
+                items=ItemMapper.to_output_dto_list(items),
+                total=total,
+                limit=query.limit,
+                offset=query.offset,
+            )
+        )
 
 
 class SearchItemsHandler:
@@ -57,12 +66,20 @@ class SearchItemsHandler:
     def __init__(self, repository: IItemRepository) -> None:
         self._repository = repository
 
-    async def handle(self, query: SearchItemsQuery) -> Result[list[ItemOutputDTO], DomainError]:
+    async def handle(self, query: SearchItemsQuery) -> Result[PaginatedResult[ItemOutputDTO], DomainError]:
         """Build a composite specification from query params and delegate to the repository."""
         spec = self._build_spec(query)
-        items = await self._repository.find_matching(spec)
-        paginated = items[query.offset : query.offset + query.limit]
-        return Success(ItemMapper.to_output_dto_list(paginated))
+        all_matching = await self._repository.find_matching(spec)
+        total = len(all_matching)
+        paginated = all_matching[query.offset : query.offset + query.limit]
+        return Success(
+            PaginatedResult(
+                items=ItemMapper.to_output_dto_list(paginated),
+                total=total,
+                limit=query.limit,
+                offset=query.offset,
+            )
+        )
 
     @staticmethod
     def _build_spec(query: SearchItemsQuery) -> Specification[Item]:
