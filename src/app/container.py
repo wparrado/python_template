@@ -47,6 +47,7 @@ from app.application.ports.item_application_service import IItemApplicationServi
 from app.application.ports.unit_of_work import IUnitOfWork
 from app.application.services.category_service import CategoryApplicationService, CategoryHandlers
 from app.application.services.item_service import ItemApplicationService, ItemHandlers
+from app.domain.ports.outbound.circuit_breaker import ICircuitBreaker
 from app.infrastructure.clock.system_clock import SystemClock
 from app.infrastructure.di.events_container import EventsContainer
 from app.infrastructure.di.persistence_container import PersistenceContainer
@@ -58,7 +59,6 @@ from app.infrastructure.persistence.in_memory.unit_of_work import InMemoryUnitOf
 from app.infrastructure.persistence.sqlalchemy.category_repository import SQLAlchemyCategoryRepository
 from app.infrastructure.persistence.sqlalchemy.item_repository import SQLAlchemyItemRepository
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SQLAlchemyUnitOfWork
-from app.domain.ports.outbound.circuit_breaker import ICircuitBreaker
 from app.settings import Settings
 
 
