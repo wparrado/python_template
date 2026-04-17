@@ -58,7 +58,7 @@ from app.infrastructure.persistence.in_memory.unit_of_work import InMemoryUnitOf
 from app.infrastructure.persistence.sqlalchemy.category_repository import SQLAlchemyCategoryRepository
 from app.infrastructure.persistence.sqlalchemy.item_repository import SQLAlchemyItemRepository
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SQLAlchemyUnitOfWork
-from app.infrastructure.resilience.pybreaker_adapter import PyBreakerAdapter
+from app.domain.ports.outbound.circuit_breaker import ICircuitBreaker
 from app.settings import Settings
 
 
@@ -123,7 +123,7 @@ class Container:
     # Public accessors
     # ------------------------------------------------------------------
 
-    def circuit_breaker(self) -> PyBreakerAdapter:
+    def circuit_breaker(self) -> ICircuitBreaker:
         """Return the shared circuit breaker adapter."""
         return self._resilience.circuit_breaker()
 

@@ -11,7 +11,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 from app.domain.model.aggregate import AggregateRoot
 from app.domain.model.example.item_events import ItemCreated, ItemDeleted, ItemUpdated
@@ -19,9 +19,6 @@ from app.domain.model.example.value_objects import CategoryId, Description, Item
 
 if TYPE_CHECKING:
     from app.domain.ports.inbound.clock import IClock
-
-# Sentinel — distinguishes "caller passed None (clear category)" from "caller omitted the arg".
-_UNSET: Final[object] = object()
 
 
 @dataclass(kw_only=True)
@@ -93,8 +90,9 @@ class Item(AggregateRoot):
         name: str | None = None,
         price: Decimal | None = None,
         description: str | None = None,
-        category_id: uuid.UUID | None | object = _UNSET,
+        category_id: uuid.UUID | None = None,
         *,
+        update_category: bool = False,
         clock: IClock,
     ) -> None:
         """Update item fields.
@@ -103,8 +101,9 @@ class Item(AggregateRoot):
         *clock* is required so that ``updated_at`` is deterministic.
         Pass a ``SystemClock`` in production or a ``FakeClock`` in tests.
 
-        Pass ``category_id=None`` to explicitly remove the category association.
-        Omit *category_id* to leave it unchanged.
+        Pass ``category_id=None`` together with ``update_category=True`` to
+        explicitly remove the category association.  Omit ``update_category``
+        (default ``False``) to leave ``category_id`` unchanged.
         """
         if name is not None:
             self.name = ItemName(name)
@@ -112,8 +111,8 @@ class Item(AggregateRoot):
             self.price = Money(price)
         if description is not None:
             self.description = Description(description)
-        if category_id is not _UNSET:
-            self.category_id = CategoryId(category_id) if category_id is not None else None  # type: ignore[arg-type]
+        if update_category:
+            self.category_id = CategoryId(category_id) if category_id is not None else None
         self._touch(clock=clock)
         self._record_event(
             ItemUpdated(

@@ -24,7 +24,6 @@ from app.application.mappers.item_mapper import ItemMapper
 from app.application.ports.unit_of_work import IUnitOfWork
 from app.application.result import Failure, Result, Success
 from app.domain.exceptions.domain_errors import CategoryNotFoundError, DomainError, ItemNotFoundError
-from app.domain.model.example.item import _UNSET as _DOMAIN_UNSET
 from app.domain.model.example.item import Item
 from app.domain.ports.inbound.clock import IClock
 from app.domain.ports.outbound.category_repository import ICategoryRepository
@@ -98,14 +97,14 @@ class UpdateItemHandler:
                 item = await self._uow.repository.find_by_id(command.item_id)
                 if item is None:
                     return Failure(ItemNotFoundError(str(command.item_id)))
-                # Map command sentinel → domain sentinel so the aggregate
-                # knows whether to update the category_id or leave it untouched.
-                cat_id = _DOMAIN_UNSET if command.category_id is CATEGORY_ID_UNSET else command.category_id
+                update_category = command.category_id is not CATEGORY_ID_UNSET
+                cat_id = None if command.category_id is CATEGORY_ID_UNSET else command.category_id
                 item.update(
                     name=command.name,
                     price=command.price,
                     description=command.description,
-                    category_id=cat_id,
+                    category_id=cat_id,  # type: ignore[arg-type]
+                    update_category=update_category,
                     clock=self._clock,
                 )
                 await self._uow.repository.save(item)

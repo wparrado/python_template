@@ -6,6 +6,7 @@ not import pybreaker or any resilience library directly.
 
 from __future__ import annotations
 
+from app.domain.ports.outbound.circuit_breaker import ICircuitBreaker
 from app.infrastructure.resilience.pybreaker_adapter import PyBreakerAdapter
 from app.settings import Settings
 
@@ -17,8 +18,8 @@ class ResilienceContainer:
     """
 
     def __init__(self, settings: Settings) -> None:
-        self._circuit_breaker = PyBreakerAdapter(settings)
+        self._circuit_breaker: ICircuitBreaker = PyBreakerAdapter(settings)
 
-    def circuit_breaker(self) -> PyBreakerAdapter:
+    def circuit_breaker(self) -> ICircuitBreaker:
         """Return the shared circuit breaker adapter."""
         return self._circuit_breaker
