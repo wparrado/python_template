@@ -11,6 +11,9 @@ permissions:
   contents: read
   packages: write  # Required to push to GHCR
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   docker-build-push:
     name: Build & Push to GHCR

@@ -14,6 +14,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ── 0. Build CI Docker image (shared across all jobs via GHA cache) ────────
   build-ci-image:
