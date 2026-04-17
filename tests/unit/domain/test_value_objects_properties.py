@@ -34,11 +34,14 @@ non_empty_printable = st.text(
     max_size=200,
 ).filter(lambda s: s.strip() != "")
 
-# Strings that are either empty or consist only of whitespace (invalid names)
-whitespace_only = st.one_of(
-    st.just(""),
-    st.text(alphabet=st.characters(whitelist_categories=("Zs", "Cc")), min_size=1, max_size=50),
-).filter(lambda s: s.strip() == "")
+# Strings that are either empty or consist only of characters Python's str.strip()
+# removes: space, tab, newline, carriage-return, vertical-tab, form-feed.
+# Building from these characters guarantees s.strip() == "" without any filter.
+whitespace_only = st.text(
+    alphabet=st.sampled_from([" ", "\t", "\n", "\r", "\x0b", "\x0c"]),
+    min_size=0,
+    max_size=50,
+)
 
 non_negative_decimals = st.decimals(
     min_value=Decimal("0"),
