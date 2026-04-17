@@ -11,8 +11,8 @@ import uuid
 from decimal import Decimal
 
 from sqlalchemy import false, select
-from sqlalchemy.sql.functions import count as sql_count
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.functions import count as sql_count
 
 from app.domain.constants import DEFAULT_PAGE_SIZE
 from app.domain.model.example.item import Item

@@ -21,13 +21,14 @@ from app.application.commands.item_commands import (
 )
 from app.application.dtos.item_dtos import ItemOutputDTO
 from app.application.mappers.item_mapper import ItemMapper
+from app.application.ports.unit_of_work import IUnitOfWork
 from app.application.result import Failure, Result, Success
 from app.domain.exceptions.domain_errors import CategoryNotFoundError, DomainError, ItemNotFoundError
-from app.domain.model.example.item import Item, _UNSET as _DOMAIN_UNSET
-from app.application.ports.unit_of_work import IUnitOfWork
-from app.domain.ports.outbound.item_repository import IItemRepository
-from app.domain.ports.outbound.category_repository import ICategoryRepository
+from app.domain.model.example.item import _UNSET as _DOMAIN_UNSET
+from app.domain.model.example.item import Item
 from app.domain.ports.inbound.clock import IClock
+from app.domain.ports.outbound.category_repository import ICategoryRepository
+from app.domain.ports.outbound.item_repository import IItemRepository
 
 
 class CreateItemHandler:

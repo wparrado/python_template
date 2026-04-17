@@ -20,7 +20,6 @@ from app.infrastructure.events._registry import EVENT_REGISTRY
 from app.infrastructure.events.in_process_publisher import InProcessEventPublisher
 from app.infrastructure.events.serialization import deserialize, serialize
 
-
 # ---------------------------------------------------------------------------
 # InProcessEventPublisher
 # ---------------------------------------------------------------------------

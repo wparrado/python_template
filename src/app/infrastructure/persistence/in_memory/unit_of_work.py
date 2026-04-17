@@ -7,9 +7,9 @@ rollback() is a no-op for in-memory storage (nothing to undo).
 
 from __future__ import annotations
 
+from app.application.ports.unit_of_work import IUnitOfWork
 from app.domain.events.base import DomainEvent
 from app.domain.ports.outbound.event_publisher import IDomainEventPublisher
-from app.application.ports.unit_of_work import IUnitOfWork
 from app.infrastructure.persistence.in_memory.item_repository import InMemoryItemRepository
 
 

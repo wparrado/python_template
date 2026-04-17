@@ -38,16 +38,14 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Callable
 from types import TracebackType
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.application.ports.unit_of_work import IUnitOfWork
 from app.domain.events.base import DomainEvent
 from app.domain.ports.outbound.event_publisher import IDomainEventPublisher
-from app.application.ports.unit_of_work import IUnitOfWork
 from app.infrastructure.events.outbox_publisher import OutboxEventPublisher
-
-TRepo = TypeVar("TRepo")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -58,7 +56,7 @@ class _UoWConfig:
     use_outbox: bool = False
 
 
-class SQLAlchemyUnitOfWork(IUnitOfWork[TRepo], Generic[TRepo]):
+class SQLAlchemyUnitOfWork[TRepo](IUnitOfWork[TRepo]):
     """Generic async SQLAlchemy unit of work.
 
     The repository type is determined at construction time via ``repo_factory``,

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class ICircuitBreaker(Protocol):
     """Structural protocol for a circuit breaker protecting outbound calls."""
 
-    def call(self, func: "Callable[..., Any]", *args: Any, **kwargs: Any) -> Any:
+    def call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Execute *func* through the circuit breaker.
 
         Raises ``CircuitBreakerError`` (or an application-level equivalent)

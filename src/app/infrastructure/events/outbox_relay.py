@@ -113,7 +113,7 @@ class OutboxRelay:
                             event_type=row.event_type,
                             event_id=str(row.id),
                         )
-                    except Exception:  # noqa: BLE001  # pylint: disable=broad-exception-caught
+                    except Exception:  # pylint: disable=broad-exception-caught
                         logger.exception(
                             "outbox_relay.dispatch_error",
                             event_type=row.event_type,

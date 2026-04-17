@@ -12,7 +12,7 @@ Strategies
 
 from __future__ import annotations
 
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 import pytest
 from hypothesis import given, settings

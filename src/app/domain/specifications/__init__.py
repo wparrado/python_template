@@ -13,9 +13,9 @@ from app.domain.specifications.item_specifications import (
 )
 
 __all__ = [
-    "Specification",
     "ActiveItemSpecification",
     "AllItemsSpecification",
     "NameContainsSpecification",
     "PriceInRangeSpecification",
+    "Specification",
 ]

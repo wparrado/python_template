@@ -8,17 +8,18 @@ from __future__ import annotations
 
 import asyncio
 import os
+
+# Import ORM metadata so Alembic can autogenerate migrations.
+# Add imports for any additional ORM modules here.
+import sys
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
-# Import ORM metadata so Alembic can autogenerate migrations.
-# Add imports for any additional ORM modules here.
-import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from app.infrastructure.persistence.sqlalchemy.models import Base  # noqa: E402
+from app.infrastructure.persistence.sqlalchemy.models import Base
 
 # Alembic Config object — provides access to values within alembic.ini.
 config = context.config

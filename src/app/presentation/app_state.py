@@ -21,8 +21,8 @@ from fastapi import Request
 
 from app.application.dtos.auth_dtos import CurrentUser
 from app.application.ports.category_application_service import ICategoryApplicationService
-from app.application.ports.item_application_service import IItemApplicationService
 from app.application.ports.health_check import IHealthCheck
+from app.application.ports.item_application_service import IItemApplicationService
 
 
 @dataclass

@@ -15,12 +15,9 @@ Usage::
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
 
 
-class Specification(ABC, Generic[T]):
+class Specification[T](ABC):
     """Abstract base for all domain specifications.
 
     Subclass and implement ``is_satisfied_by`` to express a business rule.
@@ -45,7 +42,7 @@ class Specification(ABC, Generic[T]):
         return NotSpecification(self)
 
 
-class AndSpecification(Specification[T]):
+class AndSpecification[T](Specification[T]):
     """Composite: satisfied when both inner specifications are satisfied."""
 
     def __init__(self, left: Specification[T], right: Specification[T]) -> None:
@@ -66,7 +63,7 @@ class AndSpecification(Specification[T]):
         return self._left.is_satisfied_by(candidate) and self._right.is_satisfied_by(candidate)
 
 
-class OrSpecification(Specification[T]):
+class OrSpecification[T](Specification[T]):
     """Composite: satisfied when at least one inner specification is satisfied."""
 
     def __init__(self, left: Specification[T], right: Specification[T]) -> None:
@@ -87,7 +84,7 @@ class OrSpecification(Specification[T]):
         return self._left.is_satisfied_by(candidate) or self._right.is_satisfied_by(candidate)
 
 
-class NotSpecification(Specification[T]):
+class NotSpecification[T](Specification[T]):
     """Composite: satisfied when the inner specification is *not* satisfied."""
 
     def __init__(self, spec: Specification[T]) -> None:

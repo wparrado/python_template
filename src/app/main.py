@@ -25,8 +25,7 @@ from app.infrastructure.observability.logging import configure_logging
 from app.infrastructure.observability.metrics import configure_metrics
 from app.infrastructure.observability.tracing import configure_tracing
 from app.infrastructure.rate_limiting.limiter import create_limiter
-from app.presentation.api.v1.routers import health, items
-from app.presentation.api.v1.routers import categories
+from app.presentation.api.v1.routers import categories, health, items
 from app.presentation.app_state import AppState
 from app.presentation.error_handlers import register_error_handlers
 from app.presentation.middlewares.correlation_id import CorrelationIdMiddleware

@@ -110,7 +110,7 @@ async def test_created_item_appears_in_list(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_deleted_item_excluded_from_list(client: AsyncClient) -> None:
     """Deleted items must not appear in GET /items."""
-    r1 = await client.post("/api/v1/items", json={"name": "Keep", "price": "1.00"})
+    await client.post("/api/v1/items", json={"name": "Keep", "price": "1.00"})
     r2 = await client.post("/api/v1/items", json={"name": "Remove", "price": "1.00"})
 
     await client.delete(f"/api/v1/items/{r2.json()['id']}")

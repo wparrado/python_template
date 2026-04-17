@@ -17,6 +17,7 @@ from app.domain.model.example.item import Item
 from app.domain.ports.outbound.item_repository import IItemRepository
 from app.domain.specifications.base import Specification
 
+
 class InMemoryItemRepository(IItemRepository):
     """Thread-unsafe in-memory repository suitable for testing and prototyping."""
 

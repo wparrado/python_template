@@ -100,7 +100,7 @@ async def test_created_category_appears_in_list(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_deleted_category_excluded_from_list(client: AsyncClient) -> None:
     """Deleted categories must not appear in GET /categories."""
-    r1 = await client.post("/api/v1/categories", json={"name": "Keep", "slug": "keep"})
+    await client.post("/api/v1/categories", json={"name": "Keep", "slug": "keep"})
     r2 = await client.post("/api/v1/categories", json={"name": "Remove", "slug": "remove"})
 
     await client.delete(f"/api/v1/categories/{r2.json()['id']}")

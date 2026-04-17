@@ -18,7 +18,6 @@ from typing import Any, Union, get_args, get_origin, get_type_hints
 from app.domain.events.base import DomainEvent
 from app.infrastructure.events._registry import EVENT_REGISTRY
 
-
 # ---------------------------------------------------------------------------
 # Serialization
 # ---------------------------------------------------------------------------

@@ -14,7 +14,7 @@ class ItemCreated(DomainEvent):
     """Emitted when a new item is successfully created."""
 
     name: str = ""
-    price: Decimal = Decimal("0")  # noqa: RUF009
+    price: Decimal = Decimal("0")
     description: str = ""
 
 

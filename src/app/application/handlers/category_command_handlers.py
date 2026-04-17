@@ -24,8 +24,8 @@ from app.application.ports.unit_of_work import IUnitOfWork
 from app.application.result import Failure, Result, Success
 from app.domain.exceptions.domain_errors import CategoryNotFoundError, DomainError
 from app.domain.model.example.category import Category
-from app.domain.ports.outbound.category_repository import ICategoryRepository
 from app.domain.ports.inbound.clock import IClock
+from app.domain.ports.outbound.category_repository import ICategoryRepository
 
 
 class CreateCategoryHandler:

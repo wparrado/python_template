@@ -6,8 +6,8 @@ Covers PyBreakerAdapter: circuit breaker state transitions
 
 from __future__ import annotations
 
-import pytest
 import pybreaker
+import pytest
 
 from app.infrastructure.resilience.pybreaker_adapter import PyBreakerAdapter
 from app.settings import Settings

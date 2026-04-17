@@ -7,8 +7,8 @@ Add new adapters to the `repository` fixture to validate them.
 from __future__ import annotations
 
 import uuid
+from collections.abc import AsyncGenerator
 from decimal import Decimal
-from typing import AsyncGenerator
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

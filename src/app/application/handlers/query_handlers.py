@@ -15,6 +15,7 @@ from app.application.mappers.item_mapper import ItemMapper
 from app.application.queries.item_queries import GetItemQuery, ListItemsQuery, SearchItemsQuery
 from app.application.result import Failure, Result, Success
 from app.domain.exceptions.domain_errors import DomainError, ItemNotFoundError
+from app.domain.model.example.item import Item
 from app.domain.ports.outbound.item_repository import IItemRepository
 from app.domain.specifications.base import Specification
 from app.domain.specifications.item_specifications import (
@@ -23,7 +24,6 @@ from app.domain.specifications.item_specifications import (
     NameContainsSpecification,
     PriceInRangeSpecification,
 )
-from app.domain.model.example.item import Item
 
 
 class GetItemHandler:

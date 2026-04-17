@@ -26,13 +26,13 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from app.application.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.application.dtos.auth_dtos import CurrentUser
 from app.application.ports.category_application_service import ICategoryApplicationService
-from app.presentation.app_state import get_app_state
 from app.presentation.api.v1.schemas.category_schemas import (
     CategoryResponse,
     CreateCategoryRequest,
     PaginatedCategoryResponse,
     UpdateCategoryRequest,
 )
+from app.presentation.app_state import get_app_state
 from app.presentation.mappers.category_schema_mapper import CategorySchemaMapper
 
 router = APIRouter(prefix="/categories", tags=["categories"])

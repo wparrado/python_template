@@ -27,13 +27,13 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from app.application.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.application.dtos.auth_dtos import CurrentUser
 from app.application.ports.item_application_service import IItemApplicationService
-from app.presentation.app_state import get_app_state
 from app.presentation.api.v1.schemas.item_schemas import (
     CreateItemRequest,
     ItemResponse,
     PaginatedItemResponse,
     UpdateItemRequest,
 )
+from app.presentation.app_state import get_app_state
 from app.presentation.mappers.item_schema_mapper import ItemSchemaMapper
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -65,9 +65,9 @@ class _ItemSearchParams:
 
     def __init__(
         self,
-        min_price: Decimal | None = Query(default=None, ge=0.0, description="Minimum price (inclusive)"),
-        max_price: Decimal | None = Query(default=None, ge=0.0, description="Maximum price (inclusive)"),
-        name_contains: str | None = Query(default=None, min_length=1, max_length=255, description="Name keyword"),
+        min_price: Annotated[Decimal | None, Query(ge=0.0, description="Minimum price (inclusive)")] = None,
+        max_price: Annotated[Decimal | None, Query(ge=0.0, description="Maximum price (inclusive)")] = None,
+        name_contains: Annotated[str | None, Query(min_length=1, max_length=255, description="Name keyword")] = None,
     ) -> None:
         self.min_price = min_price
         self.max_price = max_price

@@ -37,14 +37,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Generic, TypeVar
 
 from app.domain.events.base import DomainEvent
 
-R = TypeVar("R")
 
-
-class IUnitOfWork(ABC, Generic[R]):
+class IUnitOfWork[R](ABC):
     """Abstract async context manager that wraps a transactional boundary.
 
     Type parameter ``R`` is the repository exposed by this unit of work.

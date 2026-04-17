@@ -21,16 +21,10 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.application.handlers.command_handlers import (
-    CreateItemHandler,
-    DeleteItemHandler,
-    UpdateItemHandler,
-)
-from app.application.handlers.query_handlers import GetItemHandler, ListItemsHandler, SearchItemsHandler
 from app.application.handlers.category_command_handlers import (
     CreateCategoryHandler,
     DeleteCategoryHandler,
@@ -41,32 +35,35 @@ from app.application.handlers.category_query_handlers import (
     ListCategoriesHandler,
     SearchCategoriesHandler,
 )
+from app.application.handlers.command_handlers import (
+    CreateItemHandler,
+    DeleteItemHandler,
+    UpdateItemHandler,
+)
+from app.application.handlers.query_handlers import GetItemHandler, ListItemsHandler, SearchItemsHandler
 from app.application.ports.category_application_service import ICategoryApplicationService
+from app.application.ports.health_check import IHealthCheck
 from app.application.ports.item_application_service import IItemApplicationService
 from app.application.ports.unit_of_work import IUnitOfWork
 from app.application.services.category_service import CategoryApplicationService, CategoryHandlers
 from app.application.services.item_service import ItemApplicationService, ItemHandlers
-from app.application.ports.health_check import IHealthCheck
 from app.infrastructure.clock.system_clock import SystemClock
 from app.infrastructure.di.events_container import EventsContainer
 from app.infrastructure.di.persistence_container import PersistenceContainer
 from app.infrastructure.di.resilience_container import ResilienceContainer
 from app.infrastructure.events.broker.base import BrokerEventPublisher
 from app.infrastructure.events.outbox_relay import OutboxRelay
-from app.infrastructure.persistence.in_memory.unit_of_work import InMemoryUnitOfWork
 from app.infrastructure.persistence.in_memory.category_unit_of_work import InMemoryCategoryUnitOfWork
+from app.infrastructure.persistence.in_memory.unit_of_work import InMemoryUnitOfWork
+from app.infrastructure.persistence.sqlalchemy.category_repository import SQLAlchemyCategoryRepository
 from app.infrastructure.persistence.sqlalchemy.item_repository import SQLAlchemyItemRepository
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SQLAlchemyUnitOfWork
-from app.infrastructure.persistence.sqlalchemy.category_repository import SQLAlchemyCategoryRepository
 from app.infrastructure.resilience.pybreaker_adapter import PyBreakerAdapter
 from app.settings import Settings
 
-TService = TypeVar("TService")
-THandlers = TypeVar("THandlers")
-
 
 @dataclass
-class AggregateModule(Generic[TService, THandlers]):
+class AggregateModule[TService, THandlers]:
     """Wiring configuration for one aggregate service.
 
     Captures what *varies* between aggregates so that ``_build_dep`` can
@@ -240,7 +237,7 @@ class Container:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _build_dep(
+    def _build_dep[TService, THandlers](
         self,
         module: AggregateModule[TService, THandlers],
     ) -> Callable[[], AsyncGenerator[TService, None]]:
