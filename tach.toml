@@ -13,10 +13,25 @@ path = "app.infrastructure"
 depends_on = [
     { path = "app.domain" },
     { path = "app.application" },
+    { path = "app.settings" },
 ]
 
 [[modules]]
 path = "app.presentation"
 depends_on = [
     { path = "app.application" },
+]
+
+[[modules]]
+path = "app.settings"
+depends_on = []
+
+[[modules]]
+path = "app.container"
+depends_on = [
+    { path = "app.domain" },
+    { path = "app.application" },
+    { path = "app.infrastructure" },
+    { path = "app.presentation" },
+    { path = "app.settings" },
 ]
