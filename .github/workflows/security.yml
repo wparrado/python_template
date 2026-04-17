@@ -14,8 +14,6 @@ permissions:
   security-events: write  # Required to upload SARIF results
   issues: write           # Required to open issues on vulnerability findings
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # ── 1. pip-audit: Python dependency vulnerability audit ───────────────────
@@ -25,7 +23,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
@@ -97,7 +95,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Build the image locally — no push needed for scanning
       - name: Build Docker image for scanning

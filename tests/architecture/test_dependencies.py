@@ -86,49 +86,24 @@ def test_presentation_does_not_import_domain_model() -> None:
 
 def test_domain_does_not_import_sqlalchemy() -> None:
     """Domain layer must not depend on SQLAlchemy (persistence is infrastructure)."""
-    (
-        archrule("domain-no-sqlalchemy")
-        .match("app.domain.*")
-        .should_not_import("sqlalchemy")
-        .check("app")
-    )
+    (archrule("domain-no-sqlalchemy").match("app.domain.*").should_not_import("sqlalchemy").check("app"))
 
 
 def test_domain_does_not_import_fastapi() -> None:
     """Domain layer must not depend on FastAPI (HTTP is presentation)."""
-    (
-        archrule("domain-no-fastapi")
-        .match("app.domain.*")
-        .should_not_import("fastapi")
-        .check("app")
-    )
+    (archrule("domain-no-fastapi").match("app.domain.*").should_not_import("fastapi").check("app"))
 
 
 def test_application_does_not_import_sqlalchemy() -> None:
     """Application layer must not depend on SQLAlchemy."""
-    (
-        archrule("application-no-sqlalchemy")
-        .match("app.application.*")
-        .should_not_import("sqlalchemy")
-        .check("app")
-    )
+    (archrule("application-no-sqlalchemy").match("app.application.*").should_not_import("sqlalchemy").check("app"))
 
 
 def test_application_does_not_import_fastapi() -> None:
     """Application layer must not depend on FastAPI."""
-    (
-        archrule("application-no-fastapi")
-        .match("app.application.*")
-        .should_not_import("fastapi")
-        .check("app")
-    )
+    (archrule("application-no-fastapi").match("app.application.*").should_not_import("fastapi").check("app"))
 
 
 def test_presentation_does_not_import_sqlalchemy() -> None:
     """Presentation layer must not depend on SQLAlchemy (reads go via application ports)."""
-    (
-        archrule("presentation-no-sqlalchemy")
-        .match("app.presentation.*")
-        .should_not_import("sqlalchemy")
-        .check("app")
-    )
+    (archrule("presentation-no-sqlalchemy").match("app.presentation.*").should_not_import("sqlalchemy").check("app"))

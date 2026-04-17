@@ -11,8 +11,6 @@ permissions:
   contents: read
   packages: write  # Required to push to GHCR
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   docker-build-push:
@@ -23,14 +21,14 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Enable multi-architecture builds (amd64 + arm64)
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Authenticate against GitHub Container Registry
       - name: Log in to GHCR
@@ -52,7 +50,7 @@ jobs:
 
       # Build and push with GitHub Actions layer cache
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
